@@ -354,6 +354,24 @@ public class GameRental {
     * Creates a new user
     **/
    public static void CreateUser(GameRental esql){
+
+      // Print Greeting (Welcome to the Create User Wizard! or something...)
+
+      // Q1: Enter desired username (login on SQL 'User' table)
+         // If already exists, show message, then "press any key to continue", then back to Q1
+
+      // Q2: Enter password
+         // Don't need to check for anything here, as long as there is _something_
+      
+      // Q3: Enter phone number (varchar)
+
+      // Now we have all values we need 
+         // role is defaulted to 'customer', capitalization important!
+         // favGames should be empty
+         // numOverDueGames should be 0
+
+      // Do query
+
    }//end CreateUser
 
 
@@ -362,6 +380,14 @@ public class GameRental {
     * @return User login or null is the user does not exist
     **/
    public static String LogIn(GameRental esql){
+
+      // Q1: login
+
+      // Q1: Password
+
+      // If login exists, and password matches, return the login (username)
+      // Else, Print error message ("press any to continue"), return to main menu
+
       return null;
    }//end
 
