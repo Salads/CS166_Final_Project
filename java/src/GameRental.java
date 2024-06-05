@@ -353,8 +353,56 @@ public class GameRental {
    /*
     * Creates a new user
     **/
+
+   //Needs a trigger
    public static void CreateUser(GameRental esql){
-   }//end CreateUser
+      String username;
+      String password;
+      String phone_number;
+      int made = 0;
+      while (made == 0){
+         try{
+            System.out.println("Enter Username: ");
+            username = in.readLine();
+
+            try{
+               String checkUserQuery = "SELECT u.login FROM Users AS u WHERE u.login = '" + username + "'";
+               int userRowCount = esql.executeQuery(checkUserQuery);
+
+               if(userRowCount == 0){
+                  try{
+                     System.out.println("Enter Password: ");
+                     password = in.readLine();
+                     try{
+                        System.out.println("Enter Phone Number: ");
+                        phone_number = in.readLine();
+                        try{
+                           String insertUserQuery = "INSERT INTO Users(login, password, phoneNum, role) VALUES('" + username + "', '" + password + "', '" + phone_number + "', 'Customer')";
+                           esql.executeUpdate(insertUserQuery);
+                           made = 1;
+                        } catch(Exception e) {
+                           System.out.println("Insert Error");
+                        }
+                     } catch (Exception e) {
+                        System.out.println("Error");
+                        break;
+                     }
+                  } catch (Exception e) {
+                     System.out.println("Error");
+                     break;
+                  }
+               } else {
+                  System.out.println("Sorry, that username is taken. Please try again.");
+                  continue;
+               }
+            } catch (Exception e){
+               System.out.println("Query Error");
+            }
+         } catch (Exception e) {
+            System.out.println("Error");
+         }
+      }//end CreateUser
+   }
 
 
    /*
@@ -362,6 +410,38 @@ public class GameRental {
     * @return User login or null is the user does not exist
     **/
    public static String LogIn(GameRental esql){
+      String username;
+      String password;
+      try{
+         System.out.println("Enter Username: ");
+         username = in.readLine();
+
+         try{
+            System.out.println("Enter Password: ");
+            password = in.readLine();
+            try{
+               String userQuery = "SELECT * " + 
+                                  "FROM Users AS u " + 
+                                  "WHERE u.login = '" + username + "' " + 
+                                    "AND u.password = '" + password + "' ";
+               int rowCount = esql.executeQuery(userQuery);
+               if(rowCount > 0){
+                  return username;
+               } else {
+                  return null;
+               }
+         } catch (Exception e){
+            System.out.println("Query Error");
+         }
+         } catch (Exception e){
+            System.out.println("Input Error");
+         }
+         
+         
+      } catch (Exception e){
+         System.out.println("Input Error");
+      }
+     
       return null;
    }//end
 
@@ -378,6 +458,10 @@ public class GameRental {
    public static void updateTrackingInfo(GameRental esql) {}
    public static void updateCatalog(GameRental esql) {}
    public static void updateUser(GameRental esql) {}
+
+
+}//end GameRental
+
 
 
 }//end GameRental
