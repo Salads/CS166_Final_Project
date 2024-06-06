@@ -23,6 +23,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.lang.Math;
 
 /**
@@ -381,7 +385,8 @@ public class GameRental {
                            esql.executeUpdate(insertUserQuery);
                            made = 1;
                         } catch(Exception e) {
-                           System.out.println("Insert Error");
+                           System.out.println(e);
+                           System.out.println(e);
                         }
                      } catch (Exception e) {
                         System.out.println("Error");
@@ -449,11 +454,235 @@ public class GameRental {
 
    public static void viewProfile(GameRental esql) {}
    public static void updateProfile(GameRental esql) {}
-   public static void viewCatalog(GameRental esql) {}
 
+   private static void PressEnterToContinue()
+   { 
+      System.out.println("Press Enter key to continue...");
+      try{
+         in.read();
+      }  
+      catch(Exception e) {}  
+   }
 
+   private static void PrintCatalogMenu(String nameFilter, String genreFilter, int priceSort)
+   {
+      System.out.println("=========================");
+      System.out.println("==    VIEW CATALOG     ==");
+      System.out.println("=========================");
+      System.out.println("Configure view setting with the menu below!");
+      System.out.println("1. Game Name  [" + (nameFilter == null ? " any " : nameFilter) + "]");
+      System.out.println("2. Genre      [" + (genreFilter == null ? " any " : genreFilter) + "]");
 
-/*: user can order any game from the game rental store. User will be
+      String priceSortStr = "";
+      if(priceSort  == 1) {priceSortStr = "none";}
+      else if(priceSort == 2) {priceSortStr = "Ascending";}
+      else if(priceSort == 3) {priceSortStr = "Descending";}
+      System.out.println("3. Price Sort [" + priceSortStr + "]");
+      System.out.println("4. Cancel");
+      System.out.println("5. Search!");
+   }
+
+   private static SortedSet<String> GetGenresFromDatabase(GameRental gameRental)
+   {
+      SortedSet<String> result = new TreeSet<String>(); 
+      String genresQuery = "SELECT DISTINCT c.genre FROM Catalog c;";
+
+      try
+      {
+         List<List<String>> queryResult = gameRental.executeQueryAndReturnResult(genresQuery);
+         for(List<String> row : queryResult)
+         {
+            result.add(row.get(0));
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println("Genre query failed");
+      }
+
+      return result; // cache?
+   }
+
+// Rest of the functions definition go in here
+
+   public static void viewCatalog(GameRental esql) {
+      /*
+       * Filter Options
+       *    1. Game Name (contains, use "sql like")
+       *    2. Game Genre (poll genres from db)
+       *    3. Price (sort by ascending or descending)
+       */
+      String gameNameFilter    = null;
+      String gameGenreFilter   = null;
+      int    gamePriceSortType = 1; // 1 = none, 2 = ascending, 3 = descending
+
+      boolean doSearch = false;
+      boolean done = false;
+      while(!done)
+      {
+         PrintCatalogMenu(gameNameFilter, gameGenreFilter, gamePriceSortType);
+         
+         try{
+            int choice = readChoice();
+            if(choice == 1){
+               // Game Name filter
+               try
+               {
+                  System.out.print("Enter game title: ");
+                  gameNameFilter = in.readLine().trim();
+                  if(gameNameFilter.isEmpty()) {gameNameFilter = null;}
+               }
+               catch(Exception e)
+               {
+                  System.out.println("Input Error");
+                  PressEnterToContinue();
+               }
+            }
+            else if(choice == 2){
+               // Game Genre
+               try
+               {
+                  SortedSet<String> genres = GetGenresFromDatabase(esql);
+                  if(!genres.isEmpty())
+                  {
+                     String arr[] = new String[genres.size()];
+                     arr = genres.toArray(arr); // 0-based index of genres
+
+                     // Generate and print genre menu with our database data
+                     for(int i = 0; i < arr.length; i++)
+                     {
+                        System.out.println(String.format("%d. %s", i + 1, arr[i]));
+                     }
+
+                     // Take user input
+                     try
+                     {
+                        int genreChoice = readChoice();
+                        if(genreChoice <= 0 || genreChoice > arr.length)
+                        {
+                           throw new Exception("Genre choice doesn't exist");
+                        }
+
+                        gameGenreFilter = arr[genreChoice - 1];
+                     }
+                     catch(Exception e)
+                     {
+                        System.out.println(e);
+                        PressEnterToContinue();
+                     }
+                  }
+               }
+               catch(Exception e)
+               {
+                  System.out.println("Input Error");
+                  PressEnterToContinue();
+               }
+            }
+            else if(choice == 3){
+               // Price Sort
+               System.out.println("1. No Sorting");
+               System.out.println("2. Ascending");
+               System.out.println("3. Descending");
+               try
+               {
+                  int sortChoice = readChoice();
+                  if(sortChoice < 1 || sortChoice > 3)
+                  {
+                     throw new Exception("Invalid sort option!");
+                  }
+
+                  gamePriceSortType = sortChoice;
+               }  
+               catch(Exception e)
+               {
+                  System.out.println(e);
+                  PressEnterToContinue();
+               }
+            }
+            else if(choice == 4){
+               // Cancel
+               done = true;
+               return;
+            }
+            else if(choice == 5){
+               // Do search
+               doSearch = true;
+               done = true;
+            }
+            else{
+               System.out.println("Invalid choice!");
+            }
+         }
+         catch (Exception e){
+
+         }
+      }
+   
+      if(doSearch)
+      {
+         boolean hasWhereClause = false;
+         String query = "";
+         query += "SELECT c.gameName, c.genre, c.description, c.price \n";
+         query += "FROM Catalog c \n";
+         if(gameNameFilter != null || gameGenreFilter != null || gamePriceSortType != 1)
+         {
+            query += "WHERE ";
+
+            if(gameNameFilter != null)
+            {
+               query += "c.gameName LIKE '%" + gameNameFilter + "%' ";
+               hasWhereClause = true;
+            }
+
+            if(gameGenreFilter != null)
+            {
+               if(hasWhereClause)
+               {
+                  query += "AND ";
+               }
+
+               query += "c.genre = '" + gameGenreFilter + "' ";
+               hasWhereClause = true;
+            }
+
+           if(gamePriceSortType != 1)
+           {
+               query += "\nORDER BY price";
+               switch(gamePriceSortType)
+               {
+                  case 2: query += " ASC "; break;
+                  case 3: query += " DESC "; break;
+               }
+           } 
+         } // END filter query 
+         query += "; ";
+         
+         try
+         {
+            List<List<String>> rows = esql.executeQueryAndReturnResult(query);
+            for(List<String> row : rows)
+            {
+               System.out.println(String.format("%50s | %10s | %55s | %5s", row.get(0), row.get(1), row.get(2), row.get(3)));
+            }
+
+            if(rows.size() <= 0)
+            {
+               System.out.println("No entries matched your search...");
+            }
+
+            PressEnterToContinue();
+         }
+         catch(Exception e)
+         {
+            System.out.println(e);
+            PressEnterToContinue();
+         }
+      }
+   }
+
+// Rest of the functions definition go in here
+
+   /*: user can order any game from the game rental store. User will be
 asked to input every gameID and unitsOrdered (the amount of copies of the game they
 want) for each game they want to rent. The total price of their rental order should be
 returned and output to the user. After placing the rental order, the rental order
@@ -462,8 +691,6 @@ Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
 GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
 trackingID should be created for the order*/
    public static void placeOrder(GameRental esql) {}
-
-   
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
    public static void viewOrderInfo(GameRental esql) {}
@@ -471,11 +698,6 @@ trackingID should be created for the order*/
    public static void updateTrackingInfo(GameRental esql) {}
    public static void updateCatalog(GameRental esql) {}
    public static void updateUser(GameRental esql) {}
-
-
-}//end GameRental
-
-
 
 }//end GameRental
 
