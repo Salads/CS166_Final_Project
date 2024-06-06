@@ -3,11 +3,11 @@
 \! echo "USER: " $USER
 \! echo "Working Directory: '$(pwd)'"
 \set username `echo $USER`
-\set usercsvpath '/home/csmajs/':username'/cs166_final_project/data/users.csv'
-\set catalogPath '/home/csmajs/':username'/cs166_final_project/data/catalog.csv'
-\set rentalOrderPath '/home/csmajs/':username'/cs166_final_project/data/rentalorder.csv'
-\set trackingInfoPath '/home/csmajs/':username'/cs166_final_project/data/trackinginfo.csv'
-\set GamesInOrderPath '/home/csmajs/':username'/cs166_final_project/data/gamesinorder.csv'
+\set usercsvpath '/home/csmajs/':username'/github/CS166_Final_Project/data/users.csv'
+\set catalogPath '/home/csmajs/':username'/github/CS166_Final_Project/data/catalog.csv'
+\set rentalOrderPath '/home/csmajs/':username'/github/CS166_Final_Project/data/rentalorder.csv'
+\set trackingInfoPath '/home/csmajs/':username'/github/CS166_Final_Project/data/trackinginfo.csv'
+\set GamesInOrderPath '/home/csmajs/':username'/github/CS166_Final_Project/data/gamesinorder.csv'
 
 COPY Users
 FROM :'usercsvpath'

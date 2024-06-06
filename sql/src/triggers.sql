@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION create_role()
     RETURNS TRIGGER AS
     $BODY$
     BEGIN
-       NEW.role := 'Customer';
+       NEW.role := 'customer';
        RETURN NEW;
     END;
     $BODY$
@@ -14,4 +14,4 @@ CREATE OR REPLACE FUNCTION create_role()
 CREATE TRIGGER user_role_trigger 
 BEFORE INSERT ON Users
 FOR EACH ROW
-EXECUTE PROCEDURE insert_pnumber(); 
+EXECUTE PROCEDURE create_role(); 
