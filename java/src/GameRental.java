@@ -28,6 +28,7 @@ import java.util.TreeSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.lang.Math;
+import java.util.Arrays;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -300,7 +301,7 @@ public class GameRental {
                    case 7: viewOrderInfo(esql); break;
                    case 8: viewTrackingInfo(esql); break;
                    case 9: updateTrackingInfo(esql); break;
-                   case 10: updateCatalog(esql); break;
+                   case 10: updateCatalog(esql, authorisedUser); break;
                    case 11: updateUser(esql); break;
 
 
@@ -353,6 +354,50 @@ public class GameRental {
       }while (true);
       return input;
    }//end readChoice
+
+   /*
+    * Reads the users input given from the keyboard
+    * @String
+    **/
+    public static String readString(String prompt) {
+      String input;
+      // returns only if a correct value is given.
+      do {
+         System.out.print(prompt);
+         try { // read the integer, parse it and break.
+            input = in.readLine().trim();
+            if(input.isEmpty() || input == null)
+            {
+               throw new Exception("String must not be empty!");
+            }
+            break;
+         }catch (Exception e) {
+            System.out.println(e);
+            continue;
+         }//end try
+      }while (true);
+      return input;
+   }//end readString
+
+   /*
+    * Reads the users input as float given from the keyboard
+    * @String
+    **/
+    public static String readFloatAsString(String prompt) {
+      String input;
+      // returns only if a correct value is given.
+      do {
+         System.out.print(prompt);
+         try { // read the integer, parse it and break.
+            input = Float.toString(Float.parseFloat(in.readLine())); // lol
+            break;
+         }catch (Exception e) {
+            System.out.println(e);
+            continue;
+         }//end try
+      }while (true);
+      return input;
+   }//end readFloatAsString
 
    /*
     * Creates a new user
@@ -696,7 +741,244 @@ trackingID should be created for the order*/
    public static void viewOrderInfo(GameRental esql) {}
    public static void viewTrackingInfo(GameRental esql) {}
    public static void updateTrackingInfo(GameRental esql) {}
-   public static void updateCatalog(GameRental esql) {}
+
+   private static String GetFieldChangeString(String oldVal, String newVal)
+   {
+      if(oldVal == newVal)
+      {
+         return String.format("[%s]", oldVal);
+      }
+      else
+      {
+         return String.format("[%s => %s]", oldVal, newVal);
+      }
+   }
+
+   private static void EditStringField(String prompt, List<String> destArray, int arrayIdx)
+   {
+      boolean loop = true;
+      String newVal = readString(prompt);
+      destArray.set(arrayIdx, newVal);
+   }
+
+   private static String BuildEditGameInformationQuery(List<String> colNames, List<String> values, String gameID)
+   {
+      String updateGameQuery = "";
+      updateGameQuery += "UPDATE Catalog \n SET ";
+      for(int x = 1; x < colNames.size(); x++)
+      {
+         if(x != 3)
+         {
+            updateGameQuery += String.format("%s = '%s' ", colNames.get(x), values.get(x));
+         }
+         else // price
+         {
+            updateGameQuery += String.format("%s = %s ", colNames.get(x), values.get(x));
+         }
+
+         if(x < colNames.size() - 1)
+         {
+            updateGameQuery += ", ";
+         }
+         else
+         {
+            updateGameQuery += "\n";
+         }
+      }
+
+      updateGameQuery += "WHERE gameID = '" + gameID + "';";
+      return updateGameQuery;
+   }
+
+   private static void EditGameInformation(GameRental esql, List<String> curVals, List<String> newVals, String gameId)
+   {
+      // Now we ask which field(s) the manager wants to update.
+      List<String> colNames = Arrays.asList("gameID", "gameName", "genre", "price", "description", "imageURL");
+                   
+      boolean loopFieldEditorMenu = true;
+      while(loopFieldEditorMenu)
+      {
+         // Print numbered menu
+         System.out.println("Choose Field to Edit");
+         System.out.println(String.format("%-15s %s", "1. Game Name "  , GetFieldChangeString(curVals.get(1), newVals.get(1))));
+         System.out.println(String.format("%-15s %s", "2. Genre "      , GetFieldChangeString(curVals.get(2), newVals.get(2))));
+         System.out.println(String.format("%-15s %s", "3. Price "      , GetFieldChangeString(curVals.get(3), newVals.get(3))));
+         System.out.println(String.format("%-15s %s", "4. Description ", GetFieldChangeString(curVals.get(4), newVals.get(4))));
+         System.out.println(String.format("%-15s %s", "5. Image URL "  , GetFieldChangeString(curVals.get(5), newVals.get(5))));
+         System.out.println("6. Cancel");
+         System.out.println("7. Apply Edits");
+
+         try
+         {
+            int editFieldChoice = readChoice();
+            if(editFieldChoice < 1 || editFieldChoice > 7)
+            {
+               throw new Exception("Invalid choice!");
+            }
+
+            if(editFieldChoice <= 5 && editFieldChoice != 3) // if it's not the price field (the only number)
+            {
+               EditStringField(String.format("Enter new value for field %s: ", colNames.get(editFieldChoice)), newVals, editFieldChoice);
+            }
+            else if (editFieldChoice == 3)
+            {
+               // This is a number (float) input, so we need to handle it specifically.
+               String newVal = readFloatAsString(String.format("Enter new value for field %s: ", colNames.get(editFieldChoice)));
+               newVals.set(editFieldChoice, newVal);
+            }
+            else if(editFieldChoice == 6)
+            {
+               loopFieldEditorMenu = false;
+               return;
+            }
+            else if(editFieldChoice == 7)
+            {
+               String updateGameQuery = BuildEditGameInformationQuery(colNames, newVals, gameId);
+
+               System.out.println(updateGameQuery);
+               esql.executeUpdate(updateGameQuery);
+               loopFieldEditorMenu = false;
+               return;
+            }
+         }
+         catch(Exception e)
+         {
+            System.out.println(e);
+            PressEnterToContinue();
+         }
+      }
+   }
+
+   public static void updateCatalog(GameRental esql, String authorizedUser) {
+
+      // Check if current user is a manager, return if not
+      String checkIsManagerQuery = "SELECT role FROM Users WHERE login = '" + authorizedUser + "' AND role = 'manager'";
+      try
+      {
+         int numRows = esql.executeQuery(checkIsManagerQuery);
+         if(numRows <= 0)
+         {
+            throw new Exception("User is not a manager! Updating catalog is disallowed.");
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+         return;
+      }
+
+      // Select a game to modify (needs gameid primary key)
+         // game id (exact match, error if not found)
+         // filter by name contains, select with number choice
+      
+      boolean methodMenu = true;
+      while(methodMenu)
+      {
+         System.out.println("=======================================");
+         System.out.println("==      Update Game Information      ==");
+         System.out.println("=======================================\n");
+
+         System.out.println("How do you want to find the game?");
+         System.out.println("1. Game ID");
+         System.out.println("2. Game Title");
+         System.out.println("3. Cancel");
+
+         try
+         {
+            int updateGameMethodChoice = readChoice();
+            if(updateGameMethodChoice < 1 || updateGameMethodChoice > 3)
+            {
+               throw new Exception("Invalid choice!");
+            }
+
+            if(updateGameMethodChoice == 1)
+            {
+               try
+               {
+                  String gameId = readString("Enter exact Game ID: ");
+
+                  String gameIDSearchQuery = "SELECT * FROM Catalog WHERE gameID = '" + gameId + "';";
+                  List<List<String>> result = esql.executeQueryAndReturnResult(gameIDSearchQuery);
+                  if(result.size() <= 0)
+                  {
+                     throw new Exception("Could not find game!");
+                  }
+
+                  List<String> currentGameRow = result.get(0); // Since we filter on the unique gameID, there should only be 1 result, if any.
+                  List<String> newGameRow = new ArrayList<String>(currentGameRow);
+                  EditGameInformation(esql, currentGameRow, newGameRow, gameId);
+               }
+               catch(Exception e)
+               {
+                  System.out.println(e);
+                  PressEnterToContinue();
+               }  
+            }
+            else if(updateGameMethodChoice == 2)
+            {
+               // Find game to update via game title contains (use selector list)
+               try
+               {
+                  String gameTitleContainsStr = readString("Enter Game Title (Contains): ");
+                  String gameTitleLikeQuery = "SELECT * FROM Catalog WHERE gameName LIKE '%" + gameTitleContainsStr + "%';";
+                  List<List<String>> likeGames = esql.executeQueryAndReturnResult(gameTitleLikeQuery);
+
+                  if(likeGames.size() <= 0)
+                  {
+                     throw new Exception("No games matched your query...");
+                  }
+
+                  boolean loopLikeFilter = true;
+                  while(loopLikeFilter)
+                  {
+                     for(int x = 0; x < likeGames.size(); x++)
+                     {
+                        List<String> row = likeGames.get(x);
+                        System.out.println(String.format("%d. %-50s | %-8s", x+1, row.get(1), row.get(0)));
+                     }
+
+                     try
+                     {
+                        System.out.print("Select Game #: ");
+                        int gameChoiceIdx = readChoice();
+                        if(gameChoiceIdx < 1 || gameChoiceIdx > likeGames.size())
+                        {
+                           throw new Exception("Choice is not in accepted range!");
+                        }
+
+                        List<String> selectedGameRow = likeGames.get(gameChoiceIdx - 1);
+                        List<String> newGameRow = new ArrayList<String>(selectedGameRow);
+                        String gameId = selectedGameRow.get(0);
+                        EditGameInformation(esql, selectedGameRow, newGameRow, gameId);
+                        break;
+                     }
+                     catch(Exception e)
+                     {
+                        System.out.println(e);
+                        PressEnterToContinue();
+                     }
+                  }
+               }
+               catch(Exception e)
+               {
+                  System.out.println(e);
+                  PressEnterToContinue();
+               }
+            }
+            else if(updateGameMethodChoice == 3)
+            {
+               methodMenu = false;
+               return;
+            }
+         }
+         catch(Exception e)
+         {
+            System.out.println(e);
+            PressEnterToContinue();
+         }
+      }
+   }
    public static void updateUser(GameRental esql) {}
 
 }//end GameRental
