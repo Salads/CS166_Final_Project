@@ -676,7 +676,17 @@ public class GameRental {
          }
       }
    }
+
+/*: user can order any game from the game rental store. User will be
+asked to input every gameID and unitsOrdered (the amount of copies of the game they
+want) for each game they want to rent. The total price of their rental order should be
+returned and output to the user. After placing the rental order, the rental order
+information needs to be inserted in the RentalOrder table with a unique rentalOrderID.
+Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
+GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
+trackingID should be created for the order*/
    public static void placeOrder(GameRental esql) {}
+
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
    public static void viewOrderInfo(GameRental esql) {}
