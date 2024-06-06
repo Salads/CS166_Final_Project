@@ -377,7 +377,7 @@ public class GameRental {
                         System.out.println("Enter Phone Number: ");
                         phone_number = in.readLine();
                         try{
-                           String insertUserQuery = "INSERT INTO Users(login, password, phoneNum, role) VALUES('" + username + "', '" + password + "', '" + phone_number + "', 'Customer')";
+                           String insertUserQuery = "INSERT INTO Users(login, password, phoneNum) VALUES('" + username + "', '" + password + "', '" + phone_number + "')";
                            esql.executeUpdate(insertUserQuery);
                            made = 1;
                         } catch(Exception e) {
