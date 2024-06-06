@@ -405,6 +405,10 @@ public class GameRental {
 
    //Needs a trigger
    public static void CreateUser(GameRental esql){
+      System.out.println("==========================");
+      System.out.println("====== Registration ======");
+      System.out.println("==========================");
+      System.out.println();
       String username;
       String password;
       String phone_number;
@@ -460,11 +464,15 @@ public class GameRental {
     * @return User login or null is the user does not exist
     **/
    public static String LogIn(GameRental esql){
+      System.out.println("============================");
+      System.out.println("========== Login ===========");
+      System.out.println("============================");
       String username;
       String password;
       try{
          System.out.println("Enter Username: ");
          username = in.readLine();
+
 
          try{
             System.out.println("Enter Password: ");
@@ -478,6 +486,7 @@ public class GameRental {
                if(rowCount > 0){
                   return username;
                } else {
+                  System.out.println("Wrong Username or Password");
                   return null;
                }
          } catch (Exception e){
@@ -497,7 +506,10 @@ public class GameRental {
 
 // Rest of the functions definition go in here
 
-   public static void viewProfile(GameRental esql) {}
+   public static void viewProfile(GameRental esql) {
+      
+   }
+
    public static void updateProfile(GameRental esql) {}
 
    private static void PressEnterToContinue()
@@ -735,6 +747,7 @@ information needs to be inserted in the RentalOrder table with a unique rentalOr
 Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
 GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
 trackingID should be created for the order*/
+
    public static void placeOrder(GameRental esql) {}
    public static void viewAllOrders(GameRental esql) {}
    public static void viewRecentOrders(GameRental esql) {}
