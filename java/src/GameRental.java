@@ -292,7 +292,7 @@ public class GameRental {
                 System.out.println(".........................");
                 System.out.println("20. Log out");
                 switch (readChoice()){
-                   case 1: viewProfile(esql); break;
+                   case 1: viewProfile(esql, authorisedUser); break;
                    case 2: updateProfile(esql); break;
                    case 3: viewCatalog(esql); break;
                    case 4: placeOrder(esql); break;
@@ -506,8 +506,29 @@ public class GameRental {
 
 // Rest of the functions definition go in here
 
-   public static void viewProfile(GameRental esql) {
-      
+   public static void viewProfile(GameRental esql, String user) {
+      int exit = 0;
+      try{
+         String profileQuery = "SELECT * FROM Users WHERE Users.login = '" + user + "'";
+         List<List<String>> profile = esql.executeQueryAndReturnResult(profileQuery);
+         List<String> inner = profile.get(0);
+
+         System.out.println("Username: " + inner.get(0));
+         System.out.println("Password: " + inner.get(1));
+         System.out.println("Phone Number: " + inner.get(4));
+         if(inner.get(3) == null){
+            System.out.println("You have no favorite games.");
+         } else {
+            System.out.println("Favorite Games: " + inner.get(3));
+         }
+         System.out.println("Number of Overdue Games: " + inner.get(5));
+
+         System.out.println();
+         
+         PressEnterToContinue();
+      } catch (Exception e){
+         System.out.println("Query Error");
+      }
    }
 
    public static void updateProfile(GameRental esql) {}
