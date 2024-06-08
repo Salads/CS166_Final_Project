@@ -297,7 +297,7 @@ public class GameRental {
                    case 3: viewCatalog(esql); break;
                    case 4: placeOrder(esql); break;
                    case 5: viewAllOrders(esql, authorisedUser); break;
-                   case 6: viewRecentOrders(esql); break;
+                   case 6: viewRecentOrders(esql, authorisedUser); break;
                    case 7: viewOrderInfo(esql); break;
                    case 8: viewTrackingInfo(esql); break;
                    case 9: updateTrackingInfo(esql); break;
@@ -804,7 +804,39 @@ trackingID should be created for the order*/
 
    }
 
-   public static void viewRecentOrders(GameRental esql) {}
+   public static void viewRecentOrders(GameRental esql, String authorizedUser) 
+   {
+      // View all customer's rental history
+      System.out.println("==============================================================================================");
+      System.out.println("==                                     Recent Orders                                        ==");
+      System.out.println("==============================================================================================");
+
+      String query = "SELECT rentalOrderID, noOfGames, totalPrice, orderTimestamp, dueDate FROM RentalOrder WHERE login = '" 
+      + authorizedUser + "' ORDER BY orderTimestamp DESC LIMIT 5;";
+
+      try
+      {
+         System.out.println(String.format("%-20s | %-9s | %-12s | %-22s | %-22s", "Order ID", "Num Games", "Total Price", "Order Time", "Due Date"));
+         System.out.println("----------------------------------------------------------------------------------------------");
+         List<List<String>> result = esql.executeQueryAndReturnResult(query);
+         for(List<String> row : result)
+         {
+            System.out.println(String.format("%-20s | %-9s | %-12s | %-22s | %-22s", row.get(0), row.get(1), row.get(2), row.get(3), row.get(4)));
+         }
+
+         if(result.size() <= 0)
+         {
+            System.out.println("No games rented on this account!");
+         }
+         PressEnterToContinue();
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+      }
+   }
+
    public static void viewOrderInfo(GameRental esql) {}
    public static void viewTrackingInfo(GameRental esql) {}
    public static void updateTrackingInfo(GameRental esql) {}
