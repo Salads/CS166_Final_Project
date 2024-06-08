@@ -302,7 +302,7 @@ public class GameRental {
                    case 8: viewTrackingInfo(esql); break;
                    case 9: updateTrackingInfo(esql); break;
                    case 10: updateCatalog(esql, authorisedUser); break;
-                   case 11: updateUser(esql); break;
+                   case 11: updateUser(esql, authorisedUser); break;
 
 
 
@@ -979,7 +979,132 @@ trackingID should be created for the order*/
          }
       }
    }
-   public static void updateUser(GameRental esql) {}
+
+   public static void updateUser(GameRental esql, String authorizedUser) {
+
+      // Check if current user is a manager, return if not
+      String checkIsManagerQuery = "SELECT role FROM Users WHERE login = '" + authorizedUser + "' AND role = 'manager'";
+      try
+      {
+         int numRows = esql.executeQuery(checkIsManagerQuery);
+         if(numRows <= 0)
+         {
+            throw new Exception("User is not a manager! Updating catalog is disallowed.");
+         }
+
+         // Now we actually start the process.
+         // This is just like Update Game information, except for users.
+         // Either select exact user login id, or choose login with like
+
+         boolean loopUpdateUser = true;
+         while(loopUpdateUser)
+         {
+            System.out.println("=================================");
+            System.out.println("==        Update User          ==");
+            System.out.println("=================================");
+
+            try
+            {
+               String searchLogin = readString("Enter user login to edit (contains): ");
+               String searchUserQuery = "SELECT * FROM Users WHERE login LIKE '%" + searchLogin + "%';";
+               List<List<String>> matchingUsers = esql.executeQueryAndReturnResult(searchUserQuery);
+
+               for(int i = 0; i < matchingUsers.size(); i++)
+               {
+                  System.out.println(String.format("%d. %-25s", i + 1, matchingUsers.get(i).get(0)));
+               }
+
+               System.out.println(String.format("%d. Cancel", matchingUsers.size() + 1));
+
+               try
+               {
+                  int choice = readChoice();
+                  if(choice < 1 || choice > matchingUsers.size() + 1)
+                  {
+                     throw new Exception("Choice is invalid!");
+                  }
+
+                  if(choice == matchingUsers.size() + 1)
+                  {
+                     loopUpdateUser = false;
+                     break;
+                  }
+
+                  List<String> userRow = matchingUsers.get(choice - 1);
+                  List<String> newVals = new ArrayList<String>(userRow);
+                  String userLogin = userRow.get(0);
+                  List<String> colDisplayNames = Arrays.asList("Password", "Role", "Favorite Games", "Phone Num");
+                  List<String> colDataNames = Arrays.asList("password", "role", "favGames", "phoneNum");
+
+                  boolean loopEditMenu = true;
+                  while(loopEditMenu)
+                  {
+                     System.out.println("Chosen User: " + userLogin);
+                     // Print field choooser menu, don't edit login (primary key)
+                     for(int i = 0; i < colDisplayNames.size(); i++)
+                     {
+                        System.out.println(String.format("%d. %-50s [%s => %s]", i + 1, colDisplayNames.get(i), userRow.get(i + 1), newVals.get(i + 1)));
+                     }
+
+                     System.out.println(String.format("%d. Cancel", colDisplayNames.size() + 1));
+                     System.out.println(String.format("%d. Apply Changes", colDisplayNames.size() + 2));
+
+                     int fieldChoice = readChoice();
+                     if(fieldChoice < 1 || fieldChoice > colDisplayNames.size() + 2)
+                     {
+                        throw new Exception("Invalid Choice.");
+                     }
+
+                     if(fieldChoice == colDisplayNames.size() + 1)
+                     {
+                        return;
+                     }
+                     else if (fieldChoice == colDisplayNames.size() + 2)
+                     {
+                        // Built query string and execute
+                        String updateQuery = "UPDATE Users\nSET ";
+                        for(int x = 0; x < colDataNames.size(); x++)
+                        {
+                           updateQuery += String.format("%s = '%s'", colDataNames.get(x), newVals.get(x + 1));
+                           if(x < colDataNames.size() - 1)
+                           {
+                              updateQuery += ", ";
+                           }
+                        }
+                        updateQuery += "\nWHERE login = '" + userRow.get(0) + "';";
+                        esql.executeUpdate(updateQuery);
+                        return;
+                     }
+                     else
+                     {
+                        // Change new values
+                        String newVal = readString("Enter new value: ");
+                        newVals.set(fieldChoice, newVal);
+                     }
+                  }
+               }
+               catch(Exception e)
+               {
+                  System.out.println(e);
+                  PressEnterToContinue();
+               }
+               
+            }
+            catch(Exception e)
+            {
+               System.out.println(e);
+               PressEnterToContinue();
+            }
+
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+         return;
+      }
+   }
 
 }//end GameRental
 
