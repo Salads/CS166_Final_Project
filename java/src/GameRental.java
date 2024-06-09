@@ -293,7 +293,7 @@ public class GameRental {
                 System.out.println("20. Log out");
                 switch (readChoice()){
                    case 1: viewProfile(esql, authorisedUser); break;
-                   case 2: updateProfile(esql); break;
+                   case 2: updateProfile(esql, authorisedUser); break;
                    case 3: viewCatalog(esql); break;
                    case 4: placeOrder(esql); break;
                    case 5: viewAllOrders(esql, authorisedUser); break;
@@ -531,7 +531,230 @@ public class GameRental {
       }
    }
 
-   public static void updateProfile(GameRental esql) {}
+   private static String getPassword(GameRental esql, String username){
+      try{
+         String passwordQuery = "SELECT u.password FROM Users AS u WHERE u.login = '" + username + "'";
+         return esql.executeQueryAndReturnResult(passwordQuery).get(0).get(0);
+      }catch (Exception e){
+         System.out.print("SQL Exception");
+      }
+      return null;
+   }
+
+   private static String getPhoneNumber(GameRental esql, String username){
+      try{
+         String pnQuery = "SELECT u.phoneNum FROM Users AS  u WHERE u.login = '" + username + "'";
+         return esql.executeQueryAndReturnResult(pnQuery).get(0).get(0);
+      }catch (Exception e){
+         System.out.print("SQL Exception");
+      }
+      return null;
+   }
+
+   private static String getFavoriteGames(GameRental esql, String username){
+       try{
+         String fgQuery = "SELECT u.favGames FROM Users AS u WHERE u.login = '" + username + "'";
+         return esql.executeQueryAndReturnResult(fgQuery).get(0).get(0);
+      }catch (Exception e){
+         System.out.print("SQL Exception");
+      }
+      return null;
+   }
+
+   private static void changePassword(GameRental esql, String truePassword, String authorisedUser){
+      String newPassword = "";
+      String oldPassword = "";
+      boolean notSamePass = true;
+      System.out.println("Insert New Password: ");
+       
+      try{   
+         while(notSamePass){
+            newPassword = in.readLine();
+            if(newPassword.equals(truePassword)){
+               System.out.println("Error Cannot Change Password to Already Current Password");
+               System.out.println("Please try again");
+               System.out.println("Insert New Password: ");
+            } else {
+               notSamePass = false; 
+            }
+               
+         }   
+         System.out.println("Enter Current Password: ");   
+         while(true){
+            
+            try{
+               
+               oldPassword = in.readLine();
+               if(!oldPassword.equals(truePassword)){
+                  System.out.println("Error Input Does Not Match Current Password");
+                  System.out.println("Please try again");
+                  System.out.println("Insert Current Password: ");
+               } else {
+                  break;
+               }
+            } catch (Exception e){
+               System.out.println("Unrecognized Entry");
+               return;
+            }
+         }
+         String updatePassQuery = "UPDATE Users SET password = '" + newPassword + "'WHERE login = '" + authorisedUser + "'";       
+         esql.executeUpdate(updatePassQuery);
+      } catch(Exception e){
+         System.out.println("Unrecognized Entry");
+         return;
+      }
+      
+   }
+
+   private static void changePhoneNumber(GameRental esql, String truePhoneNumber, String authorisedUser, String truePassword){
+      String newPhoneNumber = "";
+      String currPassword = "";
+      boolean notSamePass = true;
+      System.out.println("Insert New Phone Number: ");
+       
+      try{   
+         while(notSamePass){
+            newPhoneNumber = in.readLine();
+            if(newPhoneNumber.equals(truePhoneNumber)){
+               System.out.println("Error Cannot Change Phone Number to Already Current Phone Number");
+               System.out.println("Please try again");
+               System.out.println("Insert New Phone Number: ");
+            } else {
+               notSamePass = false; 
+            }
+               
+         }   
+         System.out.println("Enter Current Password: ");   
+         while(true){
+            
+            try{
+               
+               currPassword = in.readLine();
+               if(!currPassword.equals(truePassword)){
+                  System.out.println("Error Input Does Not Match Current Password");
+                  System.out.println("Please try again");
+                  System.out.println("Insert Current Password: ");
+               } else {
+                  break;
+               }
+            } catch (Exception e){
+               System.out.println("Unrecognized Entry");
+               return;
+            }
+         }
+         String updatePassQuery = "UPDATE Users SET phoneNum = '" + newPhoneNumber + "'WHERE login = '" + authorisedUser + "'";       
+         esql.executeUpdate(updatePassQuery);
+      } catch(Exception e){
+         System.out.println("Unrecognized Entry");
+         return;
+      }
+   }
+
+   private static void deleteOneGame(GameRental esql, String truePassword, String authorisedUser, String favGames){
+      if(favGames == null){
+         System.out.println("Error, you have no favorite games.");
+         return;
+      }
+      String deletedGame = "";;
+      try{
+         System.out.println("Type the game you would like to delete from your favorite games: ");
+         deletedGame = in.readLine();
+         String[] games = favGames.split(",");
+         StringBuilder output = new StringBuilder();
+         for(String i : games){
+            if(!i.equals(deletedGame)){
+               output.append(i).append(",");
+            }
+         }
+         String outputString = output.toString();
+         String updateFav = "UPDATE Users SET favGames = '" + outputString + "' WHERE login = '" + authorisedUser + "'";
+         esql.executeUpdate(updateFav);
+      } catch (Exception e){
+         System.out.println("Unrecognized Entry1");
+         return;
+      }
+   }
+
+   private static void updateFavGames(GameRental esql, String truePassword, String authorisedUser, String favGames){
+      boolean isEmpty = (favGames == null) ? true : false;
+      String inputFav = "";
+      System.out.println("Insert all your favorite games that you want to add (Separate with commas (,))");
+      try{
+         inputFav = in.readLine();
+         if(isEmpty){
+            favGames = inputFav;
+         } else {
+            favGames += "," + inputFav;
+         }
+         String updateFav  = "UPDATE Users SET favGames = '" + favGames + "' WHERE login = '" + authorisedUser + "'";
+         esql.executeUpdate(updateFav);
+         return;
+      } catch(Exception e){
+         System.out.println("Unrecognized Entry 3");
+      }
+   }
+   private static void deleteAllGames(GameRental esql, String truePassword, String authorisedUser, String favGames){
+      if(favGames == null){
+         System.out.println("Error, you have no favorite games.");
+         return;
+      }
+      String inputPass = "";
+      System.out.println("You are about to delete all games from your favorite games. \n If you are sure about this, type your password");
+      try{
+         inputPass = in.readLine();
+         if(inputPass.equals(truePassword)){
+            try{
+               String deleteGames = "UPDATE Users SET favGames = NULL WHERE login = '" + authorisedUser + "'";
+               esql.executeUpdate(deleteGames);
+            } catch(Exception e){
+               System.out.println("Update Error");
+            }
+         } else{
+            System.out.println("Password incorrect. Returning to main menu");
+         }
+      } catch (Exception e){
+         System.out.println("Unrecognized Entry2");
+      }
+   }
+   private static void changeFavoriteGames(GameRental esql, String truePassword, String authorisedUser, String favGames){
+      System.out.println("What do you want to change?");
+      System.out.println("1. Delete Game From Favorite Games");
+      System.out.println("2. Update Favorite Games");
+      System.out.println("3. Delete All Favorite Games");
+
+      switch(readChoice()){
+         case 1: deleteOneGame(esql, truePassword, authorisedUser, favGames ); break;
+         case 2: updateFavGames(esql, truePassword, authorisedUser, favGames); break;
+         case 3: deleteAllGames(esql, truePassword, authorisedUser, favGames); break;
+         case 9: return;
+         default : System.out.println("Unrecognized choice!"); break;
+      }
+      return;
+   }
+
+   public static void updateProfile(GameRental esql, String authorisedUser) {
+      System.out.println("===========================");
+      System.out.println("===    Update Profile   ===");
+      System.out.println("===========================");
+      String truePassword = getPassword(esql, authorisedUser);
+      String truePhoneNumber = getPhoneNumber(esql, authorisedUser);
+      String trueFavGames = getFavoriteGames(esql, authorisedUser);
+
+      System.out.println("What do you want to change?");
+      System.out.println("1. Password");
+      System.out.println("2. Phone Number");
+      System.out.println("3. Favorite Games");
+
+      switch(readChoice()){
+         case 1: changePassword(esql, truePassword, authorisedUser); break;
+         case 2: changePhoneNumber(esql, truePhoneNumber, authorisedUser, truePassword); break;
+         case 3: changeFavoriteGames(esql, truePassword, authorisedUser, trueFavGames); break;
+         case 9: return;
+         default : System.out.println("Unrecognized choice!"); break;
+      }
+
+
+   }
 
    private static void PressEnterToContinue()
    { 
