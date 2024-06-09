@@ -298,7 +298,7 @@ public class GameRental {
                    case 4: placeOrder(esql); break;
                    case 5: viewAllOrders(esql, authorisedUser); break;
                    case 6: viewRecentOrders(esql, authorisedUser); break;
-                   case 7: viewOrderInfo(esql); break;
+                   case 7: viewOrderInfo(esql, authorisedUser); break;
                    case 8: viewTrackingInfo(esql); break;
                    case 9: updateTrackingInfo(esql); break;
                    case 10: updateCatalog(esql, authorisedUser); break;
@@ -1060,7 +1060,120 @@ trackingID should be created for the order*/
       }
    }
 
-   public static void viewOrderInfo(GameRental esql) {}
+   public static void viewOrderInfo(GameRental esql, String authorizedUser) 
+   {
+      try
+      {
+         System.out.println("==========================================");
+         System.out.println("==            View Order Info           ==");
+         System.out.println("==========================================");
+
+         // View all orders for user (choose)
+         String query = "SELECT rentalOrderID, noOfGames, totalPrice, orderTimestamp, dueDate FROM RentalOrder WHERE login = '" 
+         + authorizedUser + "' ORDER BY dueDate DESC;";
+
+         boolean loopChooseOrder = true;
+         while(loopChooseOrder)
+         {
+            System.out.println(String.format("%-23s | %-9s | %-12s | %-22s | %-22s", "Order ID", "Num Games", "Total Price", "Order Time", "Due Date"));
+            System.out.println("----------------------------------------------------------------------------------------------");
+            List<List<String>> result = esql.executeQueryAndReturnResult(query);
+            for(int i = 0; i < result.size(); i++)
+            {
+               List<String> row = result.get(i);
+               System.out.println(String.format("%d. %-20s | %-9s | %-12s | %-22s | %-22s", i + 1, row.get(0), row.get(1), row.get(2), row.get(3), row.get(4)));
+            }
+
+            if(result.size() <= 0)
+            {
+               System.out.println("No games rented on this account!");
+               PressEnterToContinue();
+               loopChooseOrder = false;
+               return;
+            }
+
+            int numResults = result.size();
+            System.out.println(String.format("%d. Cancel", numResults + 1));
+
+            int choice = readChoice();
+            if(choice < 1 || choice > numResults + 1)
+            {
+               throw new Exception("Invalid choice!");
+            }
+
+            if(choice == numResults + 1)
+            {
+               return;
+            }
+
+            List<String> chosenOrder = result.get(choice - 1);
+            // With our chosen row, we need the tracking id, and list of games for the order.
+            // tracking id is from a single row
+            // list of games is multiple rows where a rental order id matches
+            String rentalOrderId = chosenOrder.get(0);
+
+            String trackingIdQuery = "SELECT t.trackingID FROM TrackingInfo t WHERE t.rentalOrderID = '" + rentalOrderId + "';";
+            List<List<String>> trackingResults = esql.executeQueryAndReturnResult(trackingIdQuery);
+            if(trackingResults.size() <= 0)
+            {
+               System.out.println("No tracking info for this order!");
+               PressEnterToContinue();
+               loopChooseOrder = false;
+               return;
+            }
+
+            String trackingID = trackingResults.get(0).get(0); // Assume only 1 exists. The id is the first col
+
+            String gamesQuery = "SELECT gameID, unitsOrdered FROM GamesInOrder WHERE rentalOrderID = '" + rentalOrderId + "';";
+            List<List<String>> gamesInOrder = esql.executeQueryAndReturnResult(gamesQuery);
+            if(gamesInOrder.size() <= 0)
+            {
+               System.out.println("No games in this order!");
+               PressEnterToContinue();
+               loopChooseOrder = false;
+               return;
+            }
+
+            String catalogQuery = "SELECT * FROM Catalog;";
+            List<List<String>> catalog = esql.executeQueryAndReturnResult(catalogQuery);
+
+           
+            // Order generic information
+            // Then, list of game x(n)
+            System.out.println("====================================================================================");
+            System.out.println("==                                Order Details                                   ==");
+            System.out.println("====================================================================================");
+            System.out.println(String.format("%-25s | %-25s | %-11s | %-15s", "Order Time", "Due Date", "Total Price", "Tracking ID"));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println(String.format("%-25s | %-25s | %-11s | %-40s", chosenOrder.get(3), chosenOrder.get(4), chosenOrder.get(2), trackingID));
+            System.out.println("------------------------------------------------------------------------------------");
+            System.out.println("--                                    Games                                       --");
+            System.out.println("------------------------------------------------------------------------------------");
+            for(int i = 0; i < gamesInOrder.size(); i++)
+            {
+               List<String> gameRow = gamesInOrder.get(i);
+               String gameID = gameRow.get(0);
+               String gameIDNumStr = gameID.substring(4);
+               int gameIDNum = Integer.parseInt(gameIDNumStr);
+               String numUnits = gameRow.get(1);
+
+               List<String> gameCatalogRow = catalog.get(gameIDNum - 1);
+               String gameFriendlyName = gameCatalogRow.get(1);
+
+               System.out.println(String.format("%-50s x%s", gameFriendlyName, numUnits));
+            }
+
+
+            PressEnterToContinue();
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+      }
+   }
+
    public static void viewTrackingInfo(GameRental esql) {}
    public static void updateTrackingInfo(GameRental esql) {}
 
