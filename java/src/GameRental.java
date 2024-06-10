@@ -969,7 +969,6 @@ Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
 GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
 trackingID should be created for the order*/
    private static boolean isValidGame(GameRental esql, String gameID){
-
       String gameIDQuery = "SELECT c.gameID FROM catalog AS c WHERE c.gameID = '" + gameID + "'";
       try{
          int rowCount = esql.executeQuery(gameIDQuery);
@@ -1036,16 +1035,15 @@ trackingID should be created for the order*/
             }
             
          }
-      } catch (Exception e) {
-         System.out.println("Error: " + e.getMessage());
-         return;
-      }
-      try{
+
          cost = getCost(esql, gamesOrdered, numUnits);
          System.out.println("The total cost of this rental is " + cost);
+
          String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
          esql.executeUpdate(insertIntoRental);
-         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");   
+
+         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");  
+          
          String insertIntoGIO = "INSERT INTO GamesInOrder(rentalOrderId, gameID, unitsOrdered) VALUES";
          for(int i = 0; i < numGames; i++){
             insertIntoGIO += "('" + rentalID.get(rentalID.size() - 1).get(0) + "', " + gamesOrdered.get(i) + ", " + numUnits.get(i) + ")";
@@ -1058,9 +1056,6 @@ trackingID should be created for the order*/
          System.out.println("Error: " + e.getMessage());
          return;
       }
-      
-
-      
    }
    public static void viewAllOrders(GameRental esql, String authorizedUser) 
    {
