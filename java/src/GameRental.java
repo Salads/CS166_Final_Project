@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import javax.print.DocFlavor.STRING;
+
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.lang.Math;
@@ -1507,7 +1510,7 @@ trackingID should be created for the order*/
 
    private static String GetFieldChangeString(String oldVal, String newVal)
    {
-      if(oldVal == newVal)
+      if(oldVal == newVal || newVal == null)
       {
          return String.format("[%s]", oldVal);
       }
@@ -1751,6 +1754,217 @@ trackingID should be created for the order*/
          }
       }
    }
+
+   /*
+    * Wrapper function for updating a user's favorite games.
+    *
+    * packedFavGamesStr: the raw column value in the user's row.
+    *
+    * newVals: The user's row, so this function can update the row.
+    */
+   private static void UpdateUserFavoriteGames(GameRental esql, String favGamesPacked, List<String> newVals)
+   {
+      try
+      {
+         String[] favGamesArray = favGamesPacked.split(",");
+         List<String> favGames = new ArrayList<String>(); // avoid empty string 1 elem array if no fav games
+
+         if(favGamesArray.length == 1 && favGamesArray[0].trim().isEmpty())
+         {
+            // No favorite games
+            System.out.println("No favorite games!");
+         }
+         else
+         {
+            for(int i = 0; i < favGamesArray.length; i++)
+            {
+               favGames.add(favGamesArray[i]);
+            }
+         }
+
+         while(true)
+         {
+            int numGames = favGames.size();
+            for(int i = 0; i < numGames; i++)
+            {
+               System.out.println(String.format("%d. %-64s", i + 1, favGames.get(i)));
+            }
+
+            System.out.println(String.format("%d. Add Game", numGames + 1));
+            System.out.println(String.format("%d. Cancel", numGames + 2));
+            System.out.println(String.format("%d. Done (Not Applied)", numGames + 3));
+
+            int favGameChoice = readChoice();
+            if(favGameChoice < 1 || favGameChoice > numGames + 3)
+            {
+               throw new Exception("Invalid favorite game choice");
+            }
+
+            // Print menu for operation
+            // It's either a fav game slot (edit), or add game
+            if(favGameChoice == numGames + 1)
+            {
+               // Add Game
+               String newFavGame = ChooseGameByTitleContains(esql, false);
+               if(favGames.contains(newFavGame))
+               {
+                  System.out.println("This game is already a favorite!");
+                  continue;
+               }
+
+               favGames.add(newFavGame);
+            }
+            else if(favGameChoice == numGames + 2) // cancel
+            {
+               break;
+            }
+            else if(favGameChoice == numGames + 3) // done (not applied)
+            {
+               String packedString = "";
+               for(int i = 0; i < favGames.size(); i++)
+               {
+                  packedString += favGames.get(i);
+                  if(i < favGames.size() - 1)
+                  {
+                     packedString += ",";
+                  }
+               }
+
+               newVals.set(3, packedString);
+               break;
+            }
+            else
+            {
+               // Edit game
+               while(true) // Edit game menu
+               {
+                  System.out.println(String.format("Editing Favorite Game '%s'", favGames.get(favGameChoice - 1)));
+                  System.out.println("1. Change Game");
+                  System.out.println("2. Delete Game");
+                  System.out.println("3. Cancel");
+
+                  int editChoice = readChoice();
+                  if(editChoice < 1 || editChoice > 3)
+                  {
+                     throw new Exception("Invalid choice for favorite game edit!");
+                  }
+
+                  if(editChoice == 1)
+                  {
+                     // Change Game
+                     String favGamesSqlList = "(";
+                     for(int i = 0; i < favGames.size(); i++)
+                     {
+                        favGamesSqlList += "'" + favGames.get(i) + "'";
+                        if(i < favGames.size() - 1)
+                        {
+                           favGamesSqlList += ", ";
+                        }
+                     }
+
+                     if(favGames.size() <= 0)
+                     {
+                        favGamesSqlList += "''";
+                     }
+                     favGamesSqlList += ")";
+
+                     String newGame = ChooseGameByTitleContains(esql, false, favGamesSqlList);
+                     if(newGame == null)
+                     {
+                        break;
+                     }
+
+                     favGames.set(favGameChoice - 1, newGame);
+                  }
+                  else if(editChoice == 2)
+                  {
+                     // Delete Game
+                     favGames.remove(favGameChoice - 1);
+                  }
+                  else if(editChoice == 3)
+                  {
+                     break;
+                  }
+
+                  break;
+               }
+            }
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+      }
+   }
+
+   /*
+    * Overload for ChooseGame function. This doesn't require a sql string, 
+    * in case you don't want to use it.
+    */
+   private static String ChooseGameByTitleContains(GameRental esql, boolean retID)
+   {
+      return ChooseGameByTitleContains(esql, retID, "('')");
+   }
+
+   /*
+    * Convenience method to choose a game by title, using a "contains" filter.
+    *
+    * Exclude string is a sql string, i.e. a list (value1, value2, ...) that filters out the game name using the values
+    * in the list. If you don't want to deal with it, use the overloaded function that provides a default value for the exclude str.
+    */
+   private static String ChooseGameByTitleContains(GameRental esql, boolean retID, String excludeSqlStr)
+   {
+      while(true)
+      {
+         try
+         {
+            // Get string to search by
+            System.out.println("-------------------------------------------------------------------");
+            String searchStr = readString("Enter Game Title (Contains): ");
+
+            String gamesQuery = "SELECT g.gameID, g.gameName FROM Catalog g WHERE g.gameName LIKE '%" + searchStr + "%' AND g.gameName NOT IN " + excludeSqlStr + ";";
+            System.out.println(gamesQuery);
+            List<List<String>> gameRows = esql.executeQueryAndReturnResult(gamesQuery);
+            int numRows = gameRows.size();
+            if(numRows <= 0)
+            {
+               System.out.println("No games fit your search!");
+               PressEnterToContinue();
+               continue;
+            }
+
+            System.out.println("Edit Game Menu\n-----------------------------");
+            for(int i = 0; i < numRows; i++)
+            {
+               System.out.println(String.format("%d. %-64s", i + 1, gameRows.get(i).get(1)));
+            }
+
+            System.out.println(String.format("%d. Cancel", numRows + 1));
+
+            int userChoice = readChoice();
+            if(userChoice < 1 || userChoice > numRows + 1)
+            {
+               throw new Exception("Invalid choice for game!");
+            }
+
+            if(userChoice == numRows + 1)
+            {
+               return null;
+            }
+
+            List<String> chosenGameRow = gameRows.get(userChoice - 1);
+            return (retID ? chosenGameRow.get(0) : chosenGameRow.get(1));
+         }
+         catch(Exception e)
+         {
+            System.out.println(e);
+            PressEnterToContinue();
+            return null;
+         }
+      }
+   }
+
    public static void updateUser(GameRental esql, String authorizedUser) {
 
       // Check if current user is a manager, return if not
@@ -1852,6 +2066,12 @@ trackingID should be created for the order*/
                         }
 
                         newVals.set(2, allowedRoles.get(newValueIdx - 1));
+                     }
+                     else if (fieldChoice == 3)
+                     {
+                        // Edit fav games
+                        String favGamesPacked = newVals.get(3);
+                        UpdateUserFavoriteGames(esql, favGamesPacked, newVals);
                      }
                      else if (fieldChoice == colDisplayNames.size() + 2)
                      {
