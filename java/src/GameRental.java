@@ -1510,7 +1510,7 @@ trackingID should be created for the order*/
 
    private static String GetFieldChangeString(String oldVal, String newVal)
    {
-      if(oldVal == newVal || newVal == null)
+      if(oldVal.equals(newVal))
       {
          return String.format("[%s]", oldVal);
       }
@@ -1791,11 +1791,12 @@ trackingID should be created for the order*/
             }
 
             System.out.println(String.format("%d. Add Game", numGames + 1));
-            System.out.println(String.format("%d. Cancel", numGames + 2));
-            System.out.println(String.format("%d. Done (Not Applied)", numGames + 3));
+            System.out.println(String.format("%d. Remove All Games", numGames + 2));
+            System.out.println(String.format("%d. Cancel", numGames + 3));
+            System.out.println(String.format("%d. Done (Not Applied)", numGames + 4));
 
             int favGameChoice = readChoice();
-            if(favGameChoice < 1 || favGameChoice > numGames + 3)
+            if(favGameChoice < 1 || favGameChoice > numGames + 4)
             {
                throw new Exception("Invalid favorite game choice");
             }
@@ -1814,11 +1815,33 @@ trackingID should be created for the order*/
 
                favGames.add(newFavGame);
             }
-            else if(favGameChoice == numGames + 2) // cancel
+            else if(favGameChoice == numGames + 2) // Remove all games
+            {
+               while(true)
+               {
+                  String input = readString("WARNING: You are about to remove ALL your favorite games. Continue? [y/n]: ");
+                  if(input.equals("y") || input.equals("Y"))
+                  {
+                     newVals.set(3, "");
+                     break;
+                  }
+                  else if(input.equals("n") || input.equals("N"))
+                  {
+                     break;
+                  }
+                  else
+                  {
+                     System.out.println("Only enter 'y' or 'n'.");
+                  }
+               }
+
+               break;
+            }
+            else if(favGameChoice == numGames + 3) // cancel
             {
                break;
             }
-            else if(favGameChoice == numGames + 3) // done (not applied)
+            else if(favGameChoice == numGames + 4) // done (not applied)
             {
                String packedString = "";
                for(int i = 0; i < favGames.size(); i++)
