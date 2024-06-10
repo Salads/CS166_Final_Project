@@ -2049,7 +2049,7 @@ trackingID should be created for the order*/
                      // Print field choooser menu, don't edit login (primary key)
                      for(int i = 0; i < colDisplayNames.size(); i++)
                      {
-                        System.out.println(String.format("%d. %-25s [%s => %s]", i + 1, colDisplayNames.get(i), userRow.get(i + 1).trim(), newVals.get(i + 1).trim()));
+                        System.out.println(String.format("%d. %-25s %s", i + 1, colDisplayNames.get(i), GetFieldChangeString(userRow.get(i + 1).trim(), newVals.get(i + 1).trim())));
                      }
 
                      System.out.println(String.format("%d. Cancel", colDisplayNames.size() + 1));
