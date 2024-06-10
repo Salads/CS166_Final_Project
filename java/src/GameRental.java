@@ -765,6 +765,9 @@ public class GameRental {
       catch(Exception e) {}  
    }
 
+   /*
+    * Self explanatory. Just a convenience wrapper.
+    */
    private static void PrintCatalogMenu(String nameFilter, String genreFilter, int priceSort)
    {
       System.out.println("=========================");
@@ -783,6 +786,10 @@ public class GameRental {
       System.out.println("5. Search!");
    }
 
+   /*
+    * Convenience method for getting a distinct set of genres that currently exist in the database.
+    * Useful for searching for a game via genre.
+    */
    private static SortedSet<String> GetGenresFromDatabase(GameRental gameRental)
    {
       SortedSet<String> result = new TreeSet<String>(); 
@@ -1474,6 +1481,9 @@ trackingID should be created for the order*/
       }
    }
 
+   /*
+    * Convenience method for editing a simple string field.
+    */
    private static void EditStringField(String prompt, List<String> destArray, int arrayIdx)
    {
       boolean loop = true;
@@ -1481,6 +1491,9 @@ trackingID should be created for the order*/
       destArray.set(arrayIdx, newVal);
    }
 
+   /*
+    * Builds the UPDATE query for editing game information.
+    */
    private static String BuildEditGameInformationQuery(List<String> colNames, List<String> values, String gameID)
    {
       String updateGameQuery = "";
@@ -1510,6 +1523,9 @@ trackingID should be created for the order*/
       return updateGameQuery;
    }
 
+   /*
+    * Wrapper function for editing game information. Will also send the update query.
+    */
    private static void EditGameInformation(GameRental esql, List<String> curVals, List<String> newVals, String gameId)
    {
       // Now we ask which field(s) the manager wants to update.
