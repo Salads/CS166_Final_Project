@@ -301,7 +301,7 @@ public class GameRental {
                    case 1: viewProfile(esql, authorisedUser); break;
                    case 2: updateProfile(esql, authorisedUser); break;
                    case 3: viewCatalog(esql); break;
-                   case 4: placeOrder(esql); break;
+                   case 4: placeOrder(esql, authorisedUser); break;
                    case 5: viewAllOrders(esql, authorisedUser); break;
                    case 6: viewRecentOrders(esql, authorisedUser); break;
                    case 7: viewOrderInfo(esql, authorisedUser); break;
@@ -636,6 +636,9 @@ public class GameRental {
             }
          }
          String outputString = output.toString();
+         if(outputString.length() > 0){
+            outputString = outputString.substring(0, outputString.length() - 1);
+         }
          String updateFav = "UPDATE Users SET favGames = '" + outputString + "' WHERE login = '" + authorisedUser + "'";
          esql.executeUpdate(updateFav);
       } catch (Exception e){
@@ -673,7 +676,7 @@ public class GameRental {
          inputPass = in.readLine();
          if(inputPass.equals(truePassword)){
             
-            String deleteGames = "UPDATE Users SET favGames = NULL WHERE login = '" + authorisedUser + "'";
+            String deleteGames = "UPDATE Users SET favGames = '' WHERE login = '" + authorisedUser + "'";
             esql.executeUpdate(deleteGames);
             
          } else{
@@ -966,36 +969,97 @@ Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
 GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
 trackingID should be created for the order*/
    private static boolean isValidGame(GameRental esql, String gameID){
+
       String gameIDQuery = "SELECT c.gameID FROM catalog AS c WHERE c.gameID = '" + gameID + "'";
-      int rowCount = esql.executeQuery(gameIDQuery);
-      if(rowCount == 1){
-         return true;
-      } else {
+      try{
+         int rowCount = esql.executeQuery(gameIDQuery);
+         if(rowCount == 1){
+            return true;
+         } else {
+            return false;
+      }
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
          return false;
+      }
+      
+   }
+
+   private static double getCost(GameRental esql, List<String> gamesOrdered, List<Integer> numUnits){
+      try{
+         double cost = 0.0;
+         for(int i = 0; i < gamesOrdered.size(); i++){
+            String findCostQuery = "SELECT c.price FROM catalog AS c WHERE c.gameID = '" + gamesOrdered.get(i) + "'";
+            List<List<String>> query = esql.executeQueryAndReturnResult(findCostQuery);
+            cost += (1.0 * Double.parseDouble(query.get(0).get(0)) * numUnits.get(i));
+         }  
+         return cost;
+      } catch (Exception e){
+         System.out.println("Error: " + e.getMessage());
+         return 0.0;
       }
    }
 
-   public static void placeOrder(GameRental esql) {
+
+   public static void placeOrder(GameRental esql, String authorisedUser) {
       int numGames = 0;
       String gameID = "";
       int unitsOrdered = 0;
+      double cost = 0.0;
+      boolean validValue = false;
       List<String> gamesOrdered = new ArrayList<>();
+      List<Integer> numUnits = new ArrayList<>();
+
       System.out.println("How many unique games do you want to rent?");
       try{
          numGames = Integer.parseInt(in.readLine());
          for(int i = 0; i < numGames; i++){
-            System.out.println("Enter the Game ID: ");
-            gameID = in.readLine();
-            if(isValidGame(esql, gameID)){
-               
-            } else {
-
+            while(true){
+               System.out.println("Enter the Game ID: ");
+               gameID = in.readLine();
+               if(isValidGame(esql, gameID)){
+                  gamesOrdered.add(gameID);
+                  while(!validValue){
+                     try{
+                        System.out.println("Enter how many units of " + gameID + ": ");
+                        unitsOrdered = Integer.parseInt(in.readLine());
+                        numUnits.add(unitsOrdered);
+                        validValue = true;
+                     } catch (NumberFormatException e) {
+                        System.out.println("Please enter a valid integer.");
+                     }
+                  }
+                  break;
+               } else {
+                  System.out.println("Invalid Game ID. Please try again.");
+               }
             }
+            
          }
       } catch (Exception e) {
-         System.out.println("Error");
+         System.out.println("Error: " + e.getMessage());
          return;
       }
+      try{
+         cost = getCost(esql, gamesOrdered, numUnits);
+         System.out.println("The total cost of this rental is " + cost);
+         String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
+         esql.executeUpdate(insertIntoRental);
+         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");   
+         String insertIntoGIO = "INSERT INTO GamesInOrder(rentalOrderId, gameID, unitsOrdered) VALUES";
+         for(int i = 0; i < numGames; i++){
+            insertIntoGIO += "('" + rentalID.get(rentalID.size() - 1).get(0) + "', " + gamesOrdered.get(i) + ", " + numUnits.get(i) + ")";
+            if(i < numGames - 1){
+               insertIntoGIO += ",";
+            }
+         }
+         esql.executeUpdate(insertIntoGIO);
+      } catch (Exception e) {
+         System.out.println("Error: " + e.getMessage());
+         return;
+      }
+      
+
       
    }
    public static void viewAllOrders(GameRental esql, String authorizedUser) 
