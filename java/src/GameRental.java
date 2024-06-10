@@ -421,40 +421,26 @@ public class GameRental {
             System.out.println("Enter Username: ");
             username = in.readLine();
 
-            try{
-               String checkUserQuery = "SELECT u.login FROM Users AS u WHERE u.login = '" + username + "'";
-               int userRowCount = esql.executeQuery(checkUserQuery);
+            
+            String checkUserQuery = "SELECT u.login FROM Users AS u WHERE u.login = '" + username + "'";
+            int userRowCount = esql.executeQuery(checkUserQuery);
 
-               if(userRowCount == 0){
-                  try{
-                     System.out.println("Enter Password: ");
-                     password = in.readLine();
-                     try{
-                        System.out.println("Enter Phone Number: ");
-                        phone_number = in.readLine();
-                        try{
-                           String insertUserQuery = "INSERT INTO Users(login, password, phoneNum) VALUES('" + username + "', '" + password + "', '" + phone_number + "')";
-                           esql.executeUpdate(insertUserQuery);
-                           made = 1;
-                        } catch(Exception e) {
-                           System.out.println(e);
-                           System.out.println(e);
-                        }
-                     } catch (Exception e) {
-                        System.out.println("Error");
-                        break;
-                     }
-                  } catch (Exception e) {
-                     System.out.println("Error");
-                     break;
-                  }
+            if(userRowCount == 0){
+                  
+               System.out.println("Enter Password: ");
+               password = in.readLine();
+                     
+               System.out.println("Enter Phone Number: ");
+               phone_number = in.readLine();
+                        
+               String insertUserQuery = "INSERT INTO Users(login, password, phoneNum, favGames) VALUES('" + username + "', '" + password + "', '" + phone_number + "', '')";
+               esql.executeUpdate(insertUserQuery);
+               made = 1;    
                } else {
                   System.out.println("Sorry, that username is taken. Please try again.");
-                  continue;
+                  PressEnterToContinue();
                }
-            } catch (Exception e){
-               System.out.println("Query Error");
-            }
+           
          } catch (Exception e) {
             System.out.println("Error");
          }
@@ -475,31 +461,20 @@ public class GameRental {
       try{
          System.out.println("Enter Username: ");
          username = in.readLine();
-
-
-         try{
-            System.out.println("Enter Password: ");
-            password = in.readLine();
-            try{
-               String userQuery = "SELECT * " + 
-                                  "FROM Users AS u " + 
-                                  "WHERE u.login = '" + username + "' " + 
-                                    "AND u.password = '" + password + "' ";
-               int rowCount = esql.executeQuery(userQuery);
-               if(rowCount > 0){
-                  return username;
-               } else {
-                  System.out.println("Wrong Username or Password");
-                  return null;
-               }
-         } catch (Exception e){
-            System.out.println("Query Error");
-         }
-         } catch (Exception e){
-            System.out.println("Input Error");
-         }
-         
-         
+         System.out.println("Enter Password: ");
+         password = in.readLine();
+           
+         String userQuery = "SELECT * " + 
+                            "FROM Users AS u " + 
+                            "WHERE u.login = '" + username + "' " + 
+                            "AND u.password = '" + password + "' ";
+         int rowCount = esql.executeQuery(userQuery);
+         if(rowCount > 0){
+            return username;
+         } else {
+            System.out.println("Wrong Username or Password");
+            return null;
+         }   
       } catch (Exception e){
          System.out.println("Input Error");
       }
@@ -519,7 +494,7 @@ public class GameRental {
          System.out.println("Username: " + inner.get(0));
          System.out.println("Password: " + inner.get(1));
          System.out.println("Phone Number: " + inner.get(4));
-         if(inner.get(3) == null){
+         if(inner.get(3) == null || inner.get(3) == ""){
             System.out.println("You have no favorite games.");
          } else {
             System.out.println("Favorite Games: " + inner.get(3));
@@ -583,22 +558,16 @@ public class GameRental {
                
          }   
          System.out.println("Enter Current Password: ");   
-         while(true){
-            
-            try{
-               
-               oldPassword = in.readLine();
-               if(!oldPassword.equals(truePassword)){
-                  System.out.println("Error Input Does Not Match Current Password");
-                  System.out.println("Please try again");
-                  System.out.println("Insert Current Password: ");
-               } else {
-                  break;
-               }
-            } catch (Exception e){
-               System.out.println("Unrecognized Entry");
-               return;
+         while(true){       
+            oldPassword = in.readLine();
+            if(!oldPassword.equals(truePassword)){
+               System.out.println("Error Input Does Not Match Current Password");
+               System.out.println("Please try again");
+               System.out.println("Insert Current Password: ");
+            } else {
+               break;
             }
+            
          }
          String updatePassQuery = "UPDATE Users SET password = '" + newPassword + "'WHERE login = '" + authorisedUser + "'";       
          esql.executeUpdate(updatePassQuery);
@@ -628,22 +597,16 @@ public class GameRental {
                
          }   
          System.out.println("Enter Current Password: ");   
-         while(true){
-            
-            try{
-               
-               currPassword = in.readLine();
-               if(!currPassword.equals(truePassword)){
-                  System.out.println("Error Input Does Not Match Current Password");
-                  System.out.println("Please try again");
-                  System.out.println("Insert Current Password: ");
-               } else {
-                  break;
-               }
-            } catch (Exception e){
-               System.out.println("Unrecognized Entry");
-               return;
+         while(true){    
+            currPassword = in.readLine();
+            if(!currPassword.equals(truePassword)){
+               System.out.println("Error Input Does Not Match Current Password");
+               System.out.println("Please try again");
+               System.out.println("Insert Current Password: ");
+            } else {
+               break;
             }
+           
          }
          String updatePassQuery = "UPDATE Users SET phoneNum = '" + newPhoneNumber + "'WHERE login = '" + authorisedUser + "'";       
          esql.executeUpdate(updatePassQuery);
@@ -654,7 +617,7 @@ public class GameRental {
    }
 
    private static void deleteOneGame(GameRental esql, String truePassword, String authorisedUser, String favGames){
-      if(favGames == null){
+      if(favGames == ""){
          System.out.println("Error, you have no favorite games.");
          return;
       }
@@ -679,7 +642,7 @@ public class GameRental {
    }
 
    private static void updateFavGames(GameRental esql, String truePassword, String authorisedUser, String favGames){
-      boolean isEmpty = (favGames == null) ? true : false;
+      boolean isEmpty = (favGames == "") ? true : false;
       String inputFav = "";
       System.out.println("Insert all your favorite games that you want to add (Separate with commas (,))");
       try{
@@ -697,7 +660,7 @@ public class GameRental {
       }
    }
    private static void deleteAllGames(GameRental esql, String truePassword, String authorisedUser, String favGames){
-      if(favGames == null){
+      if(favGames == ""){
          System.out.println("Error, you have no favorite games.");
          return;
       }
@@ -706,12 +669,10 @@ public class GameRental {
       try{
          inputPass = in.readLine();
          if(inputPass.equals(truePassword)){
-            try{
-               String deleteGames = "UPDATE Users SET favGames = NULL WHERE login = '" + authorisedUser + "'";
-               esql.executeUpdate(deleteGames);
-            } catch(Exception e){
-               System.out.println("Update Error");
-            }
+            
+            String deleteGames = "UPDATE Users SET favGames = NULL WHERE login = '" + authorisedUser + "'";
+            esql.executeUpdate(deleteGames);
+            
          } else{
             System.out.println("Password incorrect. Returning to main menu");
          }
@@ -1001,8 +962,39 @@ information needs to be inserted in the RentalOrder table with a unique rentalOr
 Each gameID, rentalOrderID, and the unitsOrdered should be inserted into
 GamesInOrder for every game in the order. Also, a TrackingInfo record with a unique
 trackingID should be created for the order*/
+   private static boolean isValidGame(GameRental esql, String gameID){
+      String gameIDQuery = "SELECT c.gameID FROM catalog AS c WHERE c.gameID = '" + gameID + "'";
+      int rowCount = esql.executeQuery(gameIDQuery);
+      if(rowCount == 1){
+         return true;
+      } else {
+         return false;
+      }
+   }
 
-   public static void placeOrder(GameRental esql) {}
+   public static void placeOrder(GameRental esql) {
+      int numGames = 0;
+      String gameID = "";
+      int unitsOrdered = 0;
+      List<String> gamesOrdered = new ArrayList<>();
+      System.out.println("How many unique games do you want to rent?");
+      try{
+         numGames = Integer.parseInt(in.readLine());
+         for(int i = 0; i < numGames; i++){
+            System.out.println("Enter the Game ID: ");
+            gameID = in.readLine();
+            if(isValidGame(esql, gameID)){
+               
+            } else {
+
+            }
+         }
+      } catch (Exception e) {
+         System.out.println("Error");
+         return;
+      }
+      
+   }
    public static void viewAllOrders(GameRental esql, String authorizedUser) 
    {
       // View all customer's rental history
