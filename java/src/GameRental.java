@@ -1814,7 +1814,7 @@ trackingID should be created for the order*/
                      // Print field choooser menu, don't edit login (primary key)
                      for(int i = 0; i < colDisplayNames.size(); i++)
                      {
-                        System.out.println(String.format("%d. %-50s [%s => %s]", i + 1, colDisplayNames.get(i), userRow.get(i + 1), newVals.get(i + 1)));
+                        System.out.println(String.format("%d. %-25s [%s => %s]", i + 1, colDisplayNames.get(i), userRow.get(i + 1).trim(), newVals.get(i + 1).trim()));
                      }
 
                      System.out.println(String.format("%d. Cancel", colDisplayNames.size() + 1));
@@ -1829,6 +1829,29 @@ trackingID should be created for the order*/
                      if(fieldChoice == colDisplayNames.size() + 1)
                      {
                         return;
+                     }
+                     else if (fieldChoice == 2)
+                     {
+                        // Update role
+                        List<String> allowedRoles = Arrays.asList("customer", "employee", "manager");
+                        for(int i = 0; i < allowedRoles.size(); i++)
+                        {
+                           System.out.println(String.format("%d. %s", i + 1, allowedRoles.get(i)));
+                        }
+
+                        System.out.println(String.format("%d. Cancel", allowedRoles.size() + 1));
+                        int newValueIdx = readChoice();
+                        if(newValueIdx < 1 || newValueIdx > allowedRoles.size() + 1)
+                        {
+                           return;
+                        }
+
+                        if(newValueIdx == allowedRoles.size() + 1)
+                        {
+                           continue;
+                        }
+
+                        newVals.set(2, allowedRoles.get(newValueIdx - 1));
                      }
                      else if (fieldChoice == colDisplayNames.size() + 2)
                      {
