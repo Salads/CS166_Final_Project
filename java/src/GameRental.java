@@ -300,7 +300,7 @@ public class GameRental {
                    case 6: viewRecentOrders(esql, authorisedUser); break;
                    case 7: viewOrderInfo(esql, authorisedUser); break;
                    case 8: viewTrackingInfo(esql, authorisedUser); break;
-                   case 9: updateTrackingInfo(esql); break;
+                   case 9: updateTrackingInfo(esql, authorisedUser); break;
                    case 10: updateCatalog(esql, authorisedUser); break;
                    case 11: updateUser(esql, authorisedUser); break;
 
@@ -1276,7 +1276,7 @@ trackingID should be created for the order*/
 
             // We have the tracking info, just display it.
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println(String.format("%-12s | %-20s | %-30s | %-16s | %-20s | %-25s", 
+            System.out.println(String.format("%-12s | %-20s | %-30s | %-16s | %-27s | %-25s", 
                "Courier Name", 
                "Rental Order ID", 
                "Current Location", 
@@ -1285,7 +1285,7 @@ trackingID should be created for the order*/
                "Additional Comments"));
             
             System.out.println("-------------------------------------------------------------------------------------------------------------------------------");
-            System.out.println(String.format("%-12s | %-20s | %-30s | %-16s | %-20s | %-25s",
+            System.out.println(String.format("%-12s | %-20s | %-30s | %-16s | %-27s | %-25s",
                trackingInfo.get(0),
                trackingInfo.get(1),
                trackingInfo.get(2),
@@ -1303,7 +1303,164 @@ trackingID should be created for the order*/
       }
    }
 
-   public static void updateTrackingInfo(GameRental esql) {}
+   public static void updateTrackingInfo(GameRental esql, String authorizedUser) 
+   {
+      // Choose Rental Order
+      try
+      {
+         boolean loopChooseViewTrackingInfoMethod = true;
+         while(loopChooseViewTrackingInfoMethod)
+         {
+            System.out.println("=============================================");
+            System.out.println("==            View Tracking Info           ==");
+            System.out.println("=============================================");
+
+            System.out.println("1. Find by exact Tracking ID");
+            System.out.println("2. Find by order history");
+            System.out.println("3. Cancel");
+            int userTrackMethod = readChoice();
+            if(userTrackMethod < 1 || userTrackMethod > 3)
+            {
+               throw new Exception("Invalid choice...");
+            }
+
+            if(userTrackMethod == 3)
+            {
+               return;
+            }
+
+            List<String> trackingInfo = null;
+            if(userTrackMethod == 1)
+            {
+               String trackingID = readString("Enter exact Tracking ID: ");
+
+               String trackingInfoQuery = "SELECT t.trackingID, t.courierName, t.rentalOrderID, t.currentLocation, t.status, t.lastUpdateDate, t.additionalComments\n";
+               trackingInfoQuery += "FROM TrackingInfo t WHERE t.trackingID = '" + trackingID + "' AND EXISTS ";
+               trackingInfoQuery += "(SELECT 1 FROM RentalOrder r WHERE r.login = '" + authorizedUser + "' AND r.rentalOrderID = t.rentalOrderID );";
+
+               List<List<String>> result = esql.executeQueryAndReturnResult(trackingInfoQuery);
+               if(result.size() <= 0)
+               {
+                  throw new Exception("No tracking info for this id! (Maybe not allowed)");
+               }
+
+               trackingInfo = result.get(0);
+            }
+            else if(userTrackMethod == 2)
+            {
+               // List all orders, then find the tracking id from that
+               // View all orders for user (choose)
+               String query = "SELECT rentalOrderID, noOfGames, totalPrice, orderTimestamp, dueDate FROM RentalOrder WHERE login = '" 
+               + authorizedUser + "' ORDER BY dueDate DESC;";
+
+               boolean loopChooseOrder = true;
+               while(loopChooseOrder)
+               {
+                  System.out.println(String.format("%-23s | %-9s | %-12s | %-22s | %-22s", "Order ID", "Num Games", "Total Price", "Order Time", "Due Date"));
+                  System.out.println("----------------------------------------------------------------------------------------------");
+                  List<List<String>> ordersResults = esql.executeQueryAndReturnResult(query);
+                  for(int i = 0; i < ordersResults.size(); i++)
+                  {
+                     List<String> row = ordersResults.get(i);
+                     System.out.println(String.format("%d. %-20s | %-9s | %-12s | %-22s | %-22s", i + 1, row.get(0), row.get(1), row.get(2), row.get(3), row.get(4)));
+                  }
+
+                  if(ordersResults.size() <= 0)
+                  {
+                     System.out.println("No games rented on this account!");
+                     PressEnterToContinue();
+                     loopChooseOrder = false;
+                     return;
+                  }
+
+                  int numResults = ordersResults.size();
+                  System.out.println(String.format("%d. Cancel", numResults + 1));
+
+                  int choice = readChoice();
+                  if(choice < 1 || choice > numResults + 1)
+                  {
+                     throw new Exception("Invalid choice!");
+                  }
+
+                  if(choice == numResults + 1)
+                  {
+                     return;
+                  }
+
+                  List<String> chosenOrder = ordersResults.get(choice - 1);
+                  String rentalOrderID = chosenOrder.get(0);
+                  String trackingInfoQuery = "SELECT trackingID, courierName, rentalOrderID, currentLocation, status, lastUpdateDate, additionalComments\n";
+                  trackingInfoQuery += "FROM TrackingInfo WHERE rentalOrderID = '" + rentalOrderID + "';";
+   
+                  List<List<String>> trackingResults = esql.executeQueryAndReturnResult(trackingInfoQuery);
+                  if(trackingResults.size() <= 0)
+                  {
+                     throw new Exception("No tracking info for this order!");
+                  }
+   
+                  trackingInfo = trackingResults.get(0);
+                  loopChooseOrder = false;
+               }
+            }
+
+            // We have the tracking info, now we can do our edit routine.
+            // trackingID, courierName, rentalOrderID, currentLocation, status, lastUpdateDate, additionalComments
+            List<String> newVals = new ArrayList<>(trackingInfo);
+            boolean loopEditTrackingInfo = true;
+            while(loopEditTrackingInfo)
+            {
+               System.out.println(String.format("1. Status: %s",              GetFieldChangeString(trackingInfo.get(4), newVals.get(4))));
+               System.out.println(String.format("2. Current Location: %s",    GetFieldChangeString(trackingInfo.get(3), newVals.get(3))));
+               System.out.println(String.format("3. Courier Name: %s",        GetFieldChangeString(trackingInfo.get(1), newVals.get(1))));
+               System.out.println(String.format("4. Additional Comments: %s", GetFieldChangeString(trackingInfo.get(6), newVals.get(6))));
+               System.out.println("5. Cancel");
+               System.out.println("6. Apply Changes");
+
+               // lastUpdateDate should be updated using a trigger.
+               List<String> fieldNames = Arrays.asList("Status", "Current Location", "Courier Name", "Additional Comments");
+               List<Integer> fieldValCols = Arrays.asList(4, 3, 1, 6);
+
+               int fieldSelection = readChoice();
+               if(fieldSelection < 1 || fieldSelection > 6)
+               {
+                  throw new Exception("Invalid choice.");
+               }
+
+               if(fieldSelection == 5)
+               {
+                  return;
+               }
+               else if(fieldSelection == 6)
+               {
+                  // Apply Changes
+                  String updateTrackingInfoQuery = "";
+                  updateTrackingInfoQuery += "UPDATE TrackingInfo\n";
+
+                  updateTrackingInfoQuery += "SET ";
+                  updateTrackingInfoQuery += "courierName = '"          + newVals.get(1) + "', ";
+                  updateTrackingInfoQuery += "currentLocation = '"      + newVals.get(3) + "', ";
+                  updateTrackingInfoQuery += "status = '"               + newVals.get(4) + "', ";
+                  updateTrackingInfoQuery += "additionalComments = '"   + newVals.get(6) + "'\n";
+
+                  updateTrackingInfoQuery += "WHERE trackingID = '"     + trackingInfo.get(0) + "';";
+
+                  esql.executeUpdate(updateTrackingInfoQuery);
+                  return;
+               }
+               else
+               {
+                  String prompt = String.format("Enter new value for '%s': ", fieldNames.get(fieldSelection - 1));
+                  EditStringField(prompt, newVals, fieldValCols.get(fieldSelection - 1));
+               }
+            }
+         }
+      }
+      catch(Exception e)
+      {
+         System.out.println(e);
+         PressEnterToContinue();
+      }
+   }
 
    private static String GetFieldChangeString(String oldVal, String newVal)
    {
