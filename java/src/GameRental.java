@@ -29,6 +29,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.lang.Math;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Collections;
 
 /**
  * This class defines a simple embedded SQL utility class that is designed to
@@ -1453,6 +1456,39 @@ trackingID should be created for the order*/
 
                   esql.executeUpdate(updateTrackingInfoQuery);
                   return;
+               }
+               else if(fieldSelection == 1)
+               {
+                  // Edit status, should be only a limited set of values.
+                  List<String> allowedValues = Arrays.asList(
+                     "Delayed",
+                     "In Transit",
+                     "Arrived at Facility",
+                     "Out for Delivery",
+                     "Returned to Sender",
+                     "Attempted Delivery",
+                     "Ready for Pickup",
+                     "Delivered");
+
+                  // Print edit menu
+                  for(int i = 0; i < allowedValues.size(); i++)
+                  {
+                     System.out.println(String.format("%d. %s", i + 1, allowedValues.get(i)));
+                  }
+
+                  System.out.println(String.format("%d. Cancel", allowedValues.size() + 1));
+                  int newValueIdx = readChoice();
+                  if(newValueIdx < 1 || newValueIdx > allowedValues.size() + 1)
+                  {
+                     return;
+                  }
+
+                  if(newValueIdx == allowedValues.size() + 1)
+                  {
+                     continue;
+                  }
+
+                  newVals.set(4, allowedValues.get(newValueIdx - 1));
                }
                else
                {
