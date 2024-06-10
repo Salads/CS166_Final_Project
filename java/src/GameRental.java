@@ -1784,6 +1784,9 @@ trackingID should be created for the order*/
 
          while(true)
          {
+            System.out.println("-------------------------------------------------------------");
+            System.out.println("--                 Edit Favorite Games                     --");
+            System.out.println("-------------------------------------------------------------");
             int numGames = favGames.size();
             for(int i = 0; i < numGames; i++)
             {
@@ -1861,6 +1864,7 @@ trackingID should be created for the order*/
                // Edit game
                while(true) // Edit game menu
                {
+                  System.out.println("-------------------------------------------------------------");
                   System.out.println(String.format("Editing Favorite Game '%s'", favGames.get(favGameChoice - 1)));
                   System.out.println("1. Change Game");
                   System.out.println("2. Delete Game");
@@ -2047,7 +2051,9 @@ trackingID should be created for the order*/
                   boolean loopEditMenu = true;
                   while(loopEditMenu)
                   {
-                     System.out.println("Chosen User: " + userLogin);
+                     System.out.println("-------------------------------------------------------------");
+                     System.out.println("Editing User: " + userLogin);
+                     System.out.println("-------------------------------------------------------------");
                      // Print field choooser menu, don't edit login (primary key)
                      for(int i = 0; i < colDisplayNames.size(); i++)
                      {
