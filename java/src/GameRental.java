@@ -1009,10 +1009,8 @@ trackingID should be created for the order*/
 
    public static void placeOrder(GameRental esql, String authorisedUser) {
       int numGames = 0;
-      String gameID = "";
       int unitsOrdered = 0;
       double cost = 0.0;
-      boolean validValue = false;
       List<String> gamesOrdered = new ArrayList<>();
       List<Integer> numUnits = new ArrayList<>();
       System.out.println("=================================================");
@@ -1023,27 +1021,23 @@ trackingID should be created for the order*/
       try{
          numGames = Integer.parseInt(in.readLine());
          for(int i = 0; i < numGames; i++){
+            String gameID = ChooseGameByTitleContains(esql, true);
+            if(gameID == null)
+            {
+               throw new Exception("Error choosing game ID!");
+            }
+
+            gamesOrdered.add(gameID);
             while(true){
-               System.out.println("Enter the Game ID: ");
-               gameID = in.readLine();
-               if(isValidGame(esql, gameID)){
-                  gamesOrdered.add(gameID);
-                  while(!validValue){
-                     try{
-                        System.out.println("Enter how many units of " + gameID + ": ");
-                        unitsOrdered = Integer.parseInt(in.readLine());
-                        numUnits.add(unitsOrdered);
-                        validValue = true;
-                     } catch (NumberFormatException e) {
-                        System.out.println("Please enter a valid integer.");
-                     }
-                  }
+               try{
+                  System.out.println("Enter how many units of " + gameID + ": ");
+                  unitsOrdered = Integer.parseInt(in.readLine());
+                  numUnits.add(unitsOrdered);
                   break;
-               } else {
-                  System.out.println("Invalid Game ID. Please try again.");
+               } catch (NumberFormatException e) {
+                  System.out.println("Please enter a valid integer.");
                }
             }
-            
          }
 
          cost = getCost(esql, gamesOrdered, numUnits);
@@ -1068,6 +1062,7 @@ trackingID should be created for the order*/
 
          String insertIntoTracking = "INSERT INTO TrackingInfo (rentalOrderID) VALUES ('" + rentalID + "');";
          esql.executeUpdate(insertIntoTracking);
+         PressEnterToContinue();
 
       } catch (Exception e) {
          System.out.println("Error: " + e.getMessage());
