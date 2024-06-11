@@ -3,8 +3,7 @@ DROP TABLE IF EXISTS Catalog CASCADE;
 DROP TABLE IF EXISTS RentalOrder CASCADE;
 DROP TABLE IF EXISTS TrackingInfo CASCADE;
 DROP TABLE IF EXISTS GamesInOrder CASCADE;
-DROP TABLE IF EXISTS Cities CASCADE;
-DROP TABLE IF EXISTS Couriers CASCADE;
+
 
 CREATE TABLE Users ( login varchar(50) NOT NULL,
                      password varchar(30) NOT NULL,
@@ -56,10 +55,3 @@ CREATE TABLE GamesInOrder ( rentalOrderID varchar(50) NOT NULL,
                            ON DELETE CASCADE
 );
 
-CREATE TABLE Cities ( city VARCHAR(60),
-                      PRIMARY KEY(city)
-);
-
-CREATE TABLE Couriers (courierNames VARCHAR(60),
-                       PRIMARY KEY(courierNames)
-);

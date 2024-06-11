@@ -1,6 +1,7 @@
 DROP TRIGGER IF EXISTS user_role_trigger ON Users;
 DROP TRIGGER IF EXISTS trackinginfo_last_update_time ON TrackingInfo;
 DROP TRIGGER IF EXISTS generate_rentalorderid ON RentalOrder;
+DROP TRIGGER IF EXISTS generate_trackingid ON TrackingInfo;
 DROP SEQUENCE IF EXISTS rentalorder_seq;
 
 CREATE SEQUENCE rentalorder_seq START WITH 4147 INCREMENT BY 1;
@@ -35,7 +36,7 @@ CREATE OR REPLACE FUNCTION generate_rentalorder()
         next_val := nextval('rentalorder_seq');
         NEW.rentalOrderID := 'gamerentalorder' || LPAD(next_val::TEXT, 4, '0');
         NEW.orderTimestamp := NOW();
-        NEW.dueDate := DATEADD(m, 1, GETDATE());
+        NEW.dueDate := NOW() + INTERVAL '1 month';
 
         RETURN NEW;
     END;
@@ -43,31 +44,24 @@ CREATE OR REPLACE FUNCTION generate_rentalorder()
     LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION random_city()
-    RETURNS TRIGGER AS
+    RETURNS TEXT AS
     $BODY$
-    DECLARE 
-        result VARCHAR(60);
     BEGIN
-        SELECT city INTO result
-        FROM Cities 
-        ORDER BY RAND()
-        LIMIT 1;
-        return result;
+        RETURN (ARRAY['New York City, New York',
+                      'Los Angeles, California',
+                      'Chicago, Illinois',
+                      'Houston, Texas',
+                      'Phoenix, Arizona',
+                      'Philadelphia, Pennsylvania'])[floor(random()*6)+1];
     END;
     $BODY$
     LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION random_courier()
-    RETURNS TRIGGER AS
+    RETURNS TEXT AS
     $BODY$
-    DECLARE 
-        result VARCHAR(60);
     BEGIN
-        SELECT courierNames INTO result
-        FROM Couriers 
-        ORDER BY RAND()
-        LIMIT 1;
-        return result;
+        RETURN (ARRAY['FedEx', 'UPS', 'DHL', 'USPS', 'TNT'])[floor(random()*5)+1];
     END;
     $BODY$
     LANGUAGE plpgsql VOLATILE;
@@ -82,6 +76,7 @@ CREATE OR REPLACE FUNCTION generate_trackinginfo()
         NEW.courierName := random_courier();
         NEW.lastUpdateDate := NOW();
         NEW.additionalComments := '';
+        RETURN NEW;
     END;
     $BODY$
     LANGUAGE plpgsql VOLATILE;
@@ -102,3 +97,8 @@ CREATE TRIGGER generate_rentalorderid
 BEFORE INSERT ON RentalOrder
 FOR EACH ROW
 EXECUTE PROCEDURE generate_rentalorder();
+
+CREATE TRIGGER generate_trackingid
+BEFORE INSERT ON TrackingInfo
+FOR EACH ROW 
+EXECUTE PROCEDURE generate_trackinginfo();

@@ -992,7 +992,9 @@ trackingID should be created for the order*/
             List<List<String>> query = esql.executeQueryAndReturnResult(findCostQuery);
             cost += (1.0 * Double.parseDouble(query.get(0).get(0)) * numUnits.get(i));
          }  
-         return cost;
+         double scale = Math.pow(10, 2);  // 2 is the number of decimal places
+         double roundedValue = Math.round(cost * scale) / scale;
+         return roundedValue;
       } catch (Exception e){
          System.out.println("Error: " + e.getMessage());
          return 0.0;
@@ -1017,20 +1019,18 @@ trackingID should be created for the order*/
          numGames = Integer.parseInt(in.readLine());
          for(int i = 0; i < numGames; i++){
             while(true){
+               System.out.println(i);
                System.out.println("Enter the Game ID: ");
                gameID = in.readLine();
                if(isValidGame(esql, gameID)){
                   gamesOrdered.add(gameID);
-                  while(!validValue){
-                     try{
-                        System.out.println("Enter how many units of " + gameID + ": ");
-                        unitsOrdered = Integer.parseInt(in.readLine());
-                        numUnits.add(unitsOrdered);
-                        validValue = true;
-                     } catch (NumberFormatException e) {
-                        System.out.println("Please enter a valid integer.");
-                     }
+                  while(!validValue){    
+                     System.out.println("Enter how many units of " + gameID + ": ");
+                     unitsOrdered = Integer.parseInt(in.readLine());
+                     numUnits.add(unitsOrdered);
+                     validValue = true;                  
                   }
+                  validValue = false;
                   break;
                } else {
                   System.out.println("Invalid Game ID. Please try again.");
@@ -1041,20 +1041,33 @@ trackingID should be created for the order*/
 
          cost = getCost(esql, gamesOrdered, numUnits);
          System.out.println("The total cost of this rental is " + cost);
-
+         String cont = "";
+         while(true){
+            System.out.println("Do you want to continue with the purchase? (Yes/No)");
+            cont = in.readLine();
+            if(cont.equals("No")){
+               return;
+            } else if(cont.equals("Yes")){
+               break;
+            } else {
+               System.out.println("Input Not Yes or No. Please try again.");
+            }
+         }
+         
          String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
          esql.executeUpdate(insertIntoRental);
 
          List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");  
-          
+         
          String insertIntoGIO = "INSERT INTO GamesInOrder(rentalOrderId, gameID, unitsOrdered) VALUES";
          for(int i = 0; i < numGames; i++){
-            insertIntoGIO += "('" + rentalID.get(rentalID.size() - 1).get(0) + "', " + gamesOrdered.get(i) + ", " + numUnits.get(i) + ")";
+            insertIntoGIO += "('" + rentalID.get(rentalID.size() - 1).get(0) + "', '" + gamesOrdered.get(i) + "', " + numUnits.get(i) + ")";
             if(i < numGames - 1){
                insertIntoGIO += ",";
             }
          }
-         esql.executeUpdate(insertIntoGIO);
+         esql.executeUpdate(insertIntoGIO);         
+
          String insertIntoTracking = "INSERT INTO TrackingInfo(rentalOrderID) VALUES('" + rentalID.get(rentalID.size() -1).get(0) + "')";
          esql.executeUpdate(insertIntoTracking);
       } catch (Exception e) {
