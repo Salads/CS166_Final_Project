@@ -77,7 +77,7 @@ CREATE OR REPLACE FUNCTION generate_trackinginfo()
     $BODY$
     BEGIN 
         NEW.trackingID := 'trackingid' || regexp_replace(NEW.rentalorderID, '\D', '', 'g');
-        NEW.status := 'Arrived at Facility';
+        NEW.status := 'Pending';
         NEW.currentLocation := random_city();
         NEW.courierName := random_courier();
         NEW.lastUpdateDate := NOW();

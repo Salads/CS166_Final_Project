@@ -1008,6 +1008,9 @@ trackingID should be created for the order*/
       boolean validValue = false;
       List<String> gamesOrdered = new ArrayList<>();
       List<Integer> numUnits = new ArrayList<>();
+      System.out.println("=================================================");
+      System.out.println("============          Order          ============");
+      System.out.println("=================================================");
 
       System.out.println("How many unique games do you want to rent?");
       try{
@@ -1052,6 +1055,8 @@ trackingID should be created for the order*/
             }
          }
          esql.executeUpdate(insertIntoGIO);
+         String insertIntoTracking = "INSERT INTO TrackingInfo(rentalOrderID) VALUES('" + rentalID.get(rentalID.size() -1).get(0) + "')";
+         esql.executeUpdate(insertIntoTracking);
       } catch (Exception e) {
          System.out.println("Error: " + e.getMessage());
          return;
