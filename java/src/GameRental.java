@@ -17,6 +17,8 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.CallableStatement;
+import java.sql.Types;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -77,6 +79,11 @@ public class GameRental {
          System.exit(-1);
       }//end catch
    }//end GameRental
+
+   public Connection getConnection()
+   {
+      return _connection;
+   }
 
    /**
     * Method to execute an update SQL statement.  Update SQL instructions
@@ -1042,21 +1049,26 @@ trackingID should be created for the order*/
          cost = getCost(esql, gamesOrdered, numUnits);
          System.out.println("The total cost of this rental is " + cost);
 
-         String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
-         esql.executeUpdate(insertIntoRental);
+         String sql = "{ ? = call generate_rentalorderid() }";
+         Connection connection = esql.getConnection();
+         CallableStatement callableStatement = connection.prepareCall(sql);
+         callableStatement.registerOutParameter(1, Types.VARCHAR);
+         callableStatement.execute();
+         String rentalID = callableStatement.getString(1);
 
-         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");  
-          
-         String insertIntoGIO = "INSERT INTO GamesInOrder(rentalOrderId, gameID, unitsOrdered) VALUES";
+         String insertIntoRental = "INSERT INTO RentalOrder (rentalOrderID, login, noOfGames, totalPrice) VALUES('" + rentalID + "', '" + authorisedUser + "', " + numGames + ", " + cost + ");";
+         System.out.println(insertIntoRental);
+         esql.executeUpdate(insertIntoRental);          
+         
          for(int i = 0; i < numGames; i++){
-            insertIntoGIO += "('" + rentalID.get(rentalID.size() - 1).get(0) + "', " + gamesOrdered.get(i) + ", " + numUnits.get(i) + ")";
-            if(i < numGames - 1){
-               insertIntoGIO += ",";
-            }
+            String insertIntoGIO = "INSERT INTO GamesInOrder (rentalOrderId, gameID, unitsOrdered) VALUES (";
+            insertIntoGIO += "'" + rentalID + "', '" + gamesOrdered.get(i) + "', " + numUnits.get(i) + ");";
+            esql.executeUpdate(insertIntoGIO);
          }
-         esql.executeUpdate(insertIntoGIO);
-         String insertIntoTracking = "INSERT INTO TrackingInfo(rentalOrderID) VALUES('" + rentalID.get(rentalID.size() -1).get(0) + "')";
+
+         String insertIntoTracking = "INSERT INTO TrackingInfo (rentalOrderID) VALUES ('" + rentalID + "');";
          esql.executeUpdate(insertIntoTracking);
+
       } catch (Exception e) {
          System.out.println("Error: " + e.getMessage());
          return;
