@@ -34,7 +34,7 @@ CREATE TABLE RentalOrder ( rentalOrderID varchar(50) NOT NULL,
                            ON DELETE CASCADE
 );
 
-CREATE TABLE TrackingInfo ( trackingID varchar(50) NOT NULL,
+CREATE TABLE TrackingInfo (trackingID varchar(50) NOT NULL,
                            rentalOrderID varchar(50) NOT NULL,
                            status varchar(50) NOT NULL,
                            currentLocation varchar(60) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE TrackingInfo ( trackingID varchar(50) NOT NULL,
                            ON DELETE CASCADE
 );
 
-CREATE TABLE GamesInOrder ( rentalOrderID varchar(50) NOT NULL,
+CREATE TABLE GamesInOrder (rentalOrderID varchar(50) NOT NULL,
                            gameID varchar(50) NOT NULL,
                            unitsOrdered integer NOT NULL,
                            PRIMARY KEY(rentalOrderID, gameID),
