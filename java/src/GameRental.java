@@ -1382,11 +1382,20 @@ public class GameRental {
       // Choose Rental Order
       try
       {
+
+         // Check if current user is a manager, return if not
+         String checkIsManagerQuery = "SELECT role FROM Users WHERE login = '" + authorizedUser + "' AND role = 'manager'";
+         int numRows = esql.executeQuery(checkIsManagerQuery);
+         if(numRows <= 0)
+         {
+            throw new Exception("User is not a manager! Updating catalog is disallowed.");
+         }
+
          boolean loopChooseViewTrackingInfoMethod = true;
          while(loopChooseViewTrackingInfoMethod)
          {
             System.out.println("=============================================");
-            System.out.println("==            View Tracking Info           ==");
+            System.out.println("==           Update Tracking Info          ==");
             System.out.println("=============================================");
 
             System.out.println("1. Find by exact Tracking ID");
