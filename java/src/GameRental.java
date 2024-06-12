@@ -1010,7 +1010,6 @@ public class GameRental {
          numGames = Integer.parseInt(in.readLine());
          for(int i = 0; i < numGames; i++){
             while(true){
-               System.out.println(i);
                System.out.println("Enter the Game ID: ");
                gameID = in.readLine();
                if(isValidGame(esql, gameID)){
@@ -1048,7 +1047,7 @@ public class GameRental {
          String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
          esql.executeUpdate(insertIntoRental);
 
-         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "'");  
+         List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "' ORDER BY r.orderTimestamp DESC LIMIT 1");  
          
          String insertIntoGIO = "INSERT INTO GamesInOrder(rentalOrderId, gameID, unitsOrdered) VALUES";
          for(int i = 0; i < numGames; i++){
