@@ -1001,6 +1001,7 @@ public class GameRental {
       boolean validValue = false;
       List<String> gamesOrdered = new ArrayList<>();
       List<Integer> numUnits = new ArrayList<>();
+      int totalGames = 0;
       System.out.println("=================================================");
       System.out.println("============          Order          ============");
       System.out.println("=================================================");
@@ -1017,6 +1018,7 @@ public class GameRental {
                   while(!validValue){    
                      System.out.println("Enter how many units of " + gameID + ": ");
                      unitsOrdered = Integer.parseInt(in.readLine());
+                     totalGames += unitsOrdered;
                      numUnits.add(unitsOrdered);
                      validValue = true;                  
                   }
@@ -1044,7 +1046,7 @@ public class GameRental {
             }
          }
          
-         String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + numGames + ", " + cost + ")";
+         String insertIntoRental = "INSERT INTO RentalOrder(login, noOfGames, totalPrice) VALUES('" + authorisedUser + "', " + totalGames + ", " + cost + ")";
          esql.executeUpdate(insertIntoRental);
 
          List<List<String>> rentalID = esql.executeQueryAndReturnResult("SELECT r.rentalOrderID FROM rentalOrder AS r WHERE login = '" + authorisedUser + "' ORDER BY r.orderTimestamp DESC LIMIT 1");  
